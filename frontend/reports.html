@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Analytics | Reports</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="reports">
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<header class="page-hero"><div><h1>Reports</h1><p>Generate an executive summary from the active dataset.</p></div><div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div></header>
+<main class="dashboard page-content"><div class="section-intro"><span class="eyebrow">Reporting</span><h2>Executive reports</h2><p>Create a print-ready management summary.</p></div>
+<section class="card report-builder"><div class="report-options"><label>Report title<input id="reportTitle" value="Business Performance Report"></label><label>Period<input id="reportPeriod" value="Current active dataset"></label></div><button id="generateReport" class="primary-action">Generate Report</button></section>
+<section id="reportPreview" class="card report-preview"><p>Generate a report to preview the current business performance.</p></section></main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Forecast | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="forecast">
+
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<header class="page-hero">
+  <div>
+    <h1>Revenue Forecast</h1>
+    <p>Predict future revenue using the current dataset.</p>
+  </div>
+  <div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div>
+</header>
+<main class="dashboard page-content">
+
+<div class="section-intro"><span class="eyebrow">Forecast</span><h2>Revenue forecasting</h2><p>Generate anomaly-aware revenue forecasts and evaluate model performance.</p></div>
+<section class="card forecast-card">
+<div class="card-header">
+<div>
+<h3>🔮 Revenue Forecast</h3>
+<p>Predicted revenue based on historical performance</p>
+</div>
+</div>
+<div class="forecast-controls">
+<label for="forecastPeriods">
+            Forecast periods:
+        </label>
+<select id="forecastPeriods">
+<option value="1">1 month</option>
+<option selected="" value="3">3 months</option>
+<option value="6">6 months</option>
+<option value="12">12 months</option>
+</select>
+<button class="forecast-button" id="generateForecast">
+            Generate Forecast
+        </button>
+</div>
+<div class="forecast-summary">
+<div class="forecast-metric">
+<span>Last Actual Revenue</span>
+<strong id="lastActualRevenue">
+                -
+            </strong>
+</div>
+<div class="forecast-metric">
+<span>Next Forecast</span>
+<strong id="nextForecastRevenue">
+                -
+            </strong>
+</div>
+<div class="forecast-metric">
+<span>Forecast Growth</span>
+<strong id="forecastGrowth">
+                -
+            </strong>
+</div>
+</div>
+<div class="chart-container">
+<canvas id="forecastChart"></canvas>
+</div>
+<div class="forecast-model-info">
+<div class="forecast-model-header">
+<div>
+<h4>🤖 Forecast Model</h4>
+<p>Information about the forecasting model and its performance</p>
+</div>
+</div>
+<div class="forecast-model-grid">
+<div class="model-info-item">
+<span>Model</span>
+<strong id="forecastModelType">
+                -
+            </strong>
+</div>
+<div class="model-info-item">
+<span>Anomaly Adjustment</span>
+<strong id="forecastAnomalyAdjustment">
+                -
+            </strong>
+</div>
+<div class="model-info-item">
+<span>Anomaly Threshold</span>
+<strong id="forecastAnomalyThreshold">
+                -
+            </strong>
+</div>
+<div class="model-info-item">
+<span>MAE</span>
+<strong id="forecastMAE">
+                -
+            </strong>
+</div>
+<div class="model-info-item">
+<span>RMSE</span>
+<strong id="forecastRMSE">
+                -
+            </strong>
+</div>
+<div class="model-info-item">
+<span>MAPE</span>
+<strong id="forecastMAPE">
+                -
+            </strong>
+</div>
+</div>
+</div>
+</section>
+
+
+<section class="card scenario-card">
+  <div class="card-header">
+    <div><h3>📊 Scenario Analysis</h3><p>Compare pessimistic, base and optimistic revenue paths.</p></div>
+  </div>
+  <div class="scenario-controls">
+    <label for="scenarioPeriods">Forecast horizon</label>
+    <select id="scenarioPeriods"><option value="3">3 months</option><option value="6" selected>6 months</option><option value="12">12 months</option></select>
+    <button id="generateScenarios" class="forecast-button">Run Scenarios</button>
+  </div>
+  <div class="scenario-grid">
+    <div class="scenario-metric pessimistic"><span>Pessimistic</span><strong id="scenarioPessimistic">-</strong><small>-10% assumption</small></div>
+    <div class="scenario-metric base"><span>Base Case</span><strong id="scenarioBase">-</strong><small>Current model</small></div>
+    <div class="scenario-metric optimistic"><span>Optimistic</span><strong id="scenarioOptimistic">-</strong><small>+10% assumption</small></div>
+  </div>
+  <div class="chart-container scenario-chart-container"><canvas id="scenarioChart"></canvas></div>
+</section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

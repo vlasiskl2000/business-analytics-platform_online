@@ -1,0 +1,508 @@
+import uuid
+
+
+def register_and_login(client):
+    username = f"test_{uuid.uuid4().hex[:8]}"
+    password = "StrongPass123!"
+
+    response = client.post(
+        "/api/register",
+        params={"username": username, "password": password},
+    )
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    response = client.post(
+        "/api/login",
+        params={"username": username, "password": password},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["token_type"] == "bearer"
+    return username, {"Authorization": f"Bearer {body['access_token']}"}
+
+
+def test_protected_endpoint_requires_authentication(client):
+    response = client.get("/api/kpis")
+    assert response.status_code in (401, 403)
+
+
+def test_authentication_and_kpis(client):
+    _, headers = register_and_login(client)
+
+    response = client.get("/api/auth-test", headers=headers)
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    response = client.get("/api/kpis", headers=headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_revenue"] > 0
+    assert body["total_cost"] > 0
+    assert body["total_profit"] == body["total_revenue"] - body["total_cost"]
+
+
+def test_simulator_zero_change_matches_current_values(client):
+    _, headers = register_and_login(client)
+
+    kpis = client.get("/api/kpis", headers=headers).json()
+    scenario = client.get(
+        "/api/simulator",
+        params={"price_change": 0, "unit_change": 0, "cost_change": 0},
+        headers=headers,
+    )
+
+    assert scenario.status_code == 200
+    body = scenario.json()
+    assert body["scenario"]["revenue"] == kpis["total_revenue"]
+    assert body["scenario"]["cost"] == kpis["total_cost"]
+    assert body["scenario"]["profit"] == kpis["total_profit"]
+
+
+def test_simulator_rejects_invalid_values(client):
+    _, headers = register_and_login(client)
+
+    response = client.get(
+        "/api/simulator",
+        params={"price_change": 1000},
+        headers=headers,
+    )
+    assert response.status_code == 400
+
+
+def test_goals_are_user_scoped(client):
+    _, headers = register_and_login(client)
+
+    response = client.post(
+        "/api/goals",
+        params={"metric": "revenue", "target": 100000},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    response = client.get("/api/goals", headers=headers)
+    assert response.status_code == 200
+    goals = response.json()["goals"]
+    assert len(goals) == 1
+    assert goals[0]["metric"] == "revenue"
+    assert goals[0]["target"] == 100000
+
+
+def test_dashboard_widget_data_uses_sales_column(client):
+    _, headers = register_and_login(client)
+
+    response = client.post(
+        "/api/dashboard/widgets",
+        params={
+            "title": "Revenue by Product",
+            "widget_type": "bar",
+            "metric": "revenue",
+            "dimension": "product",
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    widget_id = body["id"]
+
+    response = client.get(
+        f"/api/dashboard/widget-data/{widget_id}",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data
+    assert all("label" in row and "value" in row for row in data)
+    assert all(row["value"] >= 0 for row in data)
+
+
+def test_report_data(client):
+    _, headers = register_and_login(client)
+
+    response = client.get("/api/report-data", headers=headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert "kpis" in body
+    assert "top_product" in body
+    assert "top_region" in body
+    assert "anomalies" in body
+def test_users_cannot_access_each_others_goals(client):
+    _, headers_a = register_and_login(client)
+    _, headers_b = register_and_login(client)
+
+    # User A creates a goal
+    response = client.post(
+        "/api/goals",
+        params={"metric": "revenue", "target": 50000},
+        headers=headers_a,
+    )
+    assert response.status_code == 200
+
+    # Get User A's goals and find the newly created goal
+    response = client.get("/api/goals", headers=headers_a)
+    assert response.status_code == 200
+
+    goals_a = response.json()["goals"]
+    assert len(goals_a) > 0
+
+    goal_id = goals_a[-1]["id"]
+
+    # User B must not see User A's goal
+    response = client.get("/api/goals", headers=headers_b)
+    assert response.status_code == 200
+
+    goals_b = response.json()["goals"]
+
+    assert all(
+        goal["id"] != goal_id
+        for goal in goals_b
+    )
+
+    # User A must still see their own goal
+    response = client.get("/api/goals", headers=headers_a)
+    assert response.status_code == 200
+
+    goals_a = response.json()["goals"]
+
+    assert any(
+        goal["id"] == goal_id
+        for goal in goals_a
+    )
+def test_users_cannot_access_each_others_datasets(client):
+    _, headers_a = register_and_login(client)
+    _, headers_b = register_and_login(client)
+
+    csv_content = (
+        "date,product,region,sales,cost,units\n"
+        "2026-01-01,Laptop,Athens,1000,600,10\n"
+        "2026-01-02,Monitor,Athens,500,300,5\n"
+    )
+
+    # User A uploads a dataset
+    response = client.post(
+        "/api/upload",
+        files={
+            "file": (
+                "user_a_dataset.csv",
+                csv_content.encode("utf-8"),
+                "text/csv",
+            )
+        },
+        headers=headers_a,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    # User A must see the uploaded dataset
+    response = client.get(
+        "/api/datasets",
+        headers=headers_a,
+    )
+
+    assert response.status_code == 200
+    datasets_a = response.json()["datasets"]
+
+    assert any(
+        dataset["filename"] == "user_a_dataset.csv"
+        for dataset in datasets_a
+    )
+
+    # User B must NOT see User A's dataset
+    response = client.get(
+        "/api/datasets",
+        headers=headers_b,
+    )
+
+    assert response.status_code == 200
+    datasets_b = response.json()["datasets"]
+
+    assert all(
+        dataset["filename"] != "user_a_dataset.csv"
+        for dataset in datasets_b
+    )
+def test_forecast_endpoint(client):
+    _, headers = register_and_login(client)
+
+    response = client.get(
+        "/api/forecast",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert "forecast" in body
+    assert "historical" in body
+    assert "evaluation" in body
+
+
+def test_anomalies_endpoint(client):
+    _, headers = register_and_login(client)
+
+    response = client.get(
+        "/api/anomalies",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert isinstance(body, list)
+
+
+def test_period_comparison(client):
+    _, headers = register_and_login(client)
+
+    response = client.get(
+        "/api/compare",
+        params={
+            "period1_from": "2026-01-01",
+            "period1_to": "2026-03-31",
+            "period2_from": "2026-04-01",
+            "period2_to": "2026-05-31",
+        },
+        headers=headers,
+    )
+
+    print("STATUS:", response.status_code)
+    print("BODY:", response.text)
+
+    assert response.status_code == 200
+
+def test_business_analyst(client):
+    _, headers = register_and_login(client)
+
+    response = client.post(
+        "/api/business-question",
+        params={
+            "question": "Which product generates the highest revenue?"
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body
+def test_admin_users_requires_admin_role(client):
+    from backend.database import get_user, update_user_role
+    from backend.auth import create_access_token
+
+    # Analyst
+    username_analyst, headers_analyst = register_and_login(client)
+
+    response = client.get(
+        "/api/admin/users",
+        headers=headers_analyst
+    )
+
+    assert response.status_code == 403
+
+    # Manager
+    username_manager, headers_manager = register_and_login(client)
+
+    manager = get_user(username_manager)
+    update_user_role(manager[0], "manager")
+
+    manager_token = create_access_token(
+        username_manager,
+        "manager"
+    )
+
+    headers_manager = {
+        "Authorization": f"Bearer {manager_token}"
+    }
+
+    response = client.get(
+        "/api/admin/users",
+        headers=headers_manager
+    )
+
+    assert response.status_code == 403
+
+    # Admin
+    username_admin, headers_admin = register_and_login(client)
+
+    admin = get_user(username_admin)
+    update_user_role(admin[0], "admin")
+
+    admin_token = create_access_token(
+        username_admin,
+        "admin"
+    )
+
+    headers_admin = {
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+    response = client.get(
+        "/api/admin/users",
+        headers=headers_admin
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["success"] is True
+    assert len(data["users"]) >= 3
+def test_admin_can_update_user_role(client):
+    from backend.database import get_user
+    from backend.auth import create_access_token
+
+    # Create analyst
+    username_analyst, headers_analyst = register_and_login(client)
+
+    # Analyst cannot update roles
+    response = client.put(
+        f"/api/admin/users/{get_user(username_analyst)[0]}/role",
+        params={"role": "manager"},
+        headers=headers_analyst
+    )
+
+    assert response.status_code == 403
+
+    # Create manager
+    username_manager, headers_manager = register_and_login(client)
+
+    manager = get_user(username_manager)
+
+    # Give manager role directly for testing
+    from backend.database import update_user_role
+
+    update_user_role(manager[0], "manager")
+
+    manager_token = create_access_token(
+        username_manager,
+        "manager"
+    )
+
+    headers_manager = {
+        "Authorization": f"Bearer {manager_token}"
+    }
+
+    # Manager cannot update roles
+    response = client.put(
+        f"/api/admin/users/{manager[0]}/role",
+        params={"role": "admin"},
+        headers=headers_manager
+    )
+
+    assert response.status_code == 403
+
+    # Create admin
+    username_admin, headers_admin = register_and_login(client)
+
+    admin = get_user(username_admin)
+
+    update_user_role(admin[0], "admin")
+
+    admin_token = create_access_token(
+        username_admin,
+        "admin"
+    )
+
+    headers_admin = {
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+    # Admin can promote analyst to manager
+    response = client.put(
+        f"/api/admin/users/{get_user(username_analyst)[0]}/role",
+        params={"role": "manager"},
+        headers=headers_admin
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["success"] is True
+    assert data["role"] == "manager"
+
+    # Verify database
+    updated_user = get_user(username_analyst)
+
+    assert updated_user[4] == "manager"
+
+    # Invalid role
+    response = client.put(
+        f"/api/admin/users/{get_user(username_analyst)[0]}/role",
+        params={"role": "superadmin"},
+        headers=headers_admin
+    )
+
+    assert response.status_code == 400
+def test_admin_can_update_user_role(client):
+    from backend.database import get_user, update_user_role
+    from backend.auth import create_access_token
+
+    # Analyst
+    username_analyst, headers_analyst = register_and_login(client)
+
+    analyst = get_user(username_analyst)
+
+    # Analyst must NOT be able to change roles
+    response = client.put(
+        f"/api/admin/users/{analyst[0]}/role",
+        params={"role": "manager"},
+        headers=headers_analyst
+    )
+
+    assert response.status_code == 403
+
+    # Manager
+    username_manager, _ = register_and_login(client)
+
+    manager = get_user(username_manager)
+    update_user_role(manager[0], "manager")
+
+    manager_token = create_access_token(
+        username_manager,
+        "manager"
+    )
+
+    headers_manager = {
+        "Authorization": f"Bearer {manager_token}"
+    }
+
+    response = client.put(
+        f"/api/admin/users/{analyst[0]}/role",
+        params={"role": "manager"},
+        headers=headers_manager
+    )
+
+    assert response.status_code == 403
+
+    # Admin
+    username_admin, _ = register_and_login(client)
+
+    admin = get_user(username_admin)
+    update_user_role(admin[0], "admin")
+
+    admin_token = create_access_token(
+        username_admin,
+        "admin"
+    )
+
+    headers_admin = {
+        "Authorization": f"Bearer {admin_token}"
+    }
+
+    response = client.put(
+        f"/api/admin/users/{analyst[0]}/role",
+        params={"role": "manager"},
+        headers=headers_admin
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["success"] is True
+    assert data["user"]["username"] == username_analyst
+    assert data["user"]["role"] == "manager"

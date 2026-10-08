@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anomaly Detection | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="anomalies">
+
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<header class="page-hero">
+  <div>
+    <h1>Anomaly Detection</h1>
+    <p>Detect unusual changes in business performance.</p>
+  </div>
+  <div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div>
+</header>
+<main class="dashboard page-content">
+
+<div class="section-intro"><span class="eyebrow">Anomalies</span><h2>Anomaly detection</h2><p>Identify significant changes and investigate their possible causes.</p></div>
+<section class="card filters-card">
+<div class="card-header">
+<div>
+<h3>Filters</h3>
+<p>Filter the business data</p>
+</div>
+</div>
+<div class="filters">
+<div class="filter-group">
+<label for="productFilter">Product</label>
+<select id="productFilter">
+<option value="">All Products</option>
+<option value="Laptop">Laptop</option>
+<option value="Monitor">Monitor</option>
+<option value="Keyboard">Keyboard</option>
+<option value="Mouse">Mouse</option>
+</select>
+</div>
+<div class="filter-group">
+<label for="regionFilter">Region</label>
+<select id="regionFilter">
+<option value="">All Regions</option>
+<option value="Athens">Athens</option>
+<option value="Thessaloniki">Thessaloniki</option>
+<option value="Larissa">Larissa</option>
+</select>
+</div>
+<div class="filter-group">
+<label for="dateFrom">Date From</label>
+<input id="dateFrom" type="date"/>
+</div>
+<div class="filter-group">
+<label for="dateTo">Date To</label>
+<input id="dateTo" type="date"/>
+</div>
+<button id="applyFilters">
+            Apply Filters
+        </button>
+</div>
+</section>
+<section class="card">
+<div class="card-header">
+<div>
+<h3>⚠️ Anomaly Alerts</h3>
+<p>Significant changes detected in the dataset</p>
+</div>
+</div>
+<div id="anomalyAlerts">
+<p>No anomalies detected.</p>
+</div>
+</section>
+<div class="card anomaly-summary-card">
+  <div class="card-header"><div><h3>How anomalies are detected</h3><p>Revenue changes are compared against the configured threshold.</p></div></div>
+  <div id="anomalySummary"><p>Loading anomaly analysis...</p></div>
+</div>
+
+
+<section class="card anomaly-command-card">
+  <div class="card-header"><div><h3>Risk Overview</h3><p>Portfolio-level anomaly severity</p></div></div>
+  <div class="risk-grid">
+    <div><span>Detected Events</span><strong id="riskEventCount">-</strong></div>
+    <div><span>Highest Change</span><strong id="riskHighestChange">-</strong></div>
+    <div><span>Risk Level</span><strong id="riskLevel">-</strong></div>
+  </div>
+</section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset Manager | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="data">
+
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<header class="page-hero">
+  <div>
+    <h1>Dataset Manager</h1>
+    <p>Manage the data powering your analytics.</p>
+  </div>
+  <div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div>
+</header>
+<main class="dashboard page-content">
+
+<div class="section-intro"><span class="eyebrow">Data</span><h2>Dataset management</h2><p>Upload, switch and inspect the datasets used by the analytics engine.</p></div>
+<section class="card upload-card">
+<div class="card-header">
+<div>
+<h3>Upload Dataset</h3>
+<p>Upload a CSV file to analyze your business data</p>
+</div>
+</div>
+<div class="upload-area">
+<input accept=".csv" id="csvFile" type="file"/>
+<button id="uploadButton">
+            Upload CSV
+        </button>
+<button id="resetButton">
+            Reset Dataset
+        </button>
+<span id="uploadStatus"></span>
+</div>
+</section>
+<section class="card dataset-manager-card">
+<div class="card-header">
+<div>
+<h3>📁 Dataset Manager</h3>
+<p>Manage your uploaded datasets</p>
+</div>
+</div>
+<div id="datasetManager">
+<p>Loading datasets...</p>
+</div>
+</section>
+<section class="card dataset-card">
+<div class="card-header">
+<div>
+<h3>Dataset Preview</h3>
+<p>Preview of the currently loaded dataset</p>
+</div>
+</div>
+<div class="dataset-info">
+<span id="datasetRows">Rows: -</span>
+<span id="datasetColumns">Columns: -</span>
+</div>
+<div class="table-controls">
+<input id="datasetSearch" placeholder="Search dataset..." type="text"/>
+<div class="rows-control">
+<label for="rowsPerPage">Rows per page:</label>
+<select id="rowsPerPage">
+<option value="5">5</option>
+<option value="10">10</option>
+<option value="25">25</option>
+<option value="50">50</option>
+<option value="100">100</option>
+</select>
+</div>
+</div>
+<div class="table-container">
+<table id="datasetTable">
+<thead></thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="pagination" id="pagination"></div>
+</section>
+
+
+<section class="card data-quality-card">
+  <div class="card-header"><div><h3>🧪 Data Quality</h3><p>Automated checks on the active dataset.</p></div><span id="qualityScore" class="quality-score">--/100</span></div>
+  <div class="quality-grid">
+    <div><span>Missing Values</span><strong id="qualityMissing">-</strong></div>
+    <div><span>Duplicate Rows</span><strong id="qualityDuplicates">-</strong></div>
+    <div><span>Invalid Dates</span><strong id="qualityDates">-</strong></div>
+    <div><span>Negative Sales</span><strong id="qualityNegativeSales">-</strong></div>
+  </div>
+</section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

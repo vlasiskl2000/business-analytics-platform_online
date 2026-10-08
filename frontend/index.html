@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Analytics | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="overview">
+
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div id="authScreen" class="auth-visible">
+<div class="auth-card">
+<h1>Business Analytics</h1>
+<p class="auth-subtitle">Sign in to your account</p>
+<input type="text" id="loginUsername" placeholder="Username">
+<input type="password" id="loginPassword" placeholder="Password">
+<button id="loginButton">Login</button>
+<p id="authMessage"></p>
+<div class="register-link">Don't have an account? <button id="showRegister">Register</button></div>
+</div>
+<div class="auth-card" id="registerCard" style="display:none;">
+<h1>Business Analytics</h1>
+<p class="auth-subtitle">Create your account</p>
+<input type="text" id="registerUsername" placeholder="Username">
+<input type="password" id="registerPassword" placeholder="Password">
+<input type="password" id="registerConfirmPassword" placeholder="Confirm password">
+<button id="registerButton">Register</button>
+<p id="registerMessage"></p>
+<div class="register-link">Already have an account? <button id="showLogin">Login</button></div>
+</div>
+</div><div id="dashboard" class="overview-wrapper overview-hidden"><header class="page-hero">
+  <div>
+    <h1>Business Analytics</h1>
+    <p>Business performance overview</p>
+  </div>
+  <div class="overview-data-status"><span class="status-dot"></span><span id="activeDatasetStatus">Live data</span></div>
+</header>
+<main class="dashboard page-content">
+<nav class="dashboard-nav">
+
+    <a href="index.html">
+        Dashboard
+    </a>
+
+    <a href="sales.html">
+        Sales
+    </a>
+
+    <a href="forecast.html">
+        Forecast
+    </a>
+
+    <a href="goals.html">
+        Goals
+    </a>
+
+    <a href="reports.html">
+        Reports
+    </a>
+
+    <a href="alerts.html">
+        Alerts
+    </a>
+
+    <a
+        id="adminNavLink"
+        href="admin.html"
+        style="display: none;"
+    >
+        👑 Admin Panel
+    </a>
+
+</nav>
+<div class="section-intro"><span class="eyebrow">Overview</span><h2>Business performance at a glance</h2><p>Monitor your key metrics and latest business insights.</p></div>
+<section class="kpi-grid">
+<div class="card kpi-card">
+<p class="kpi-title">Revenue</p>
+<h2 id="revenue">Loading...</h2>
+</div>
+<div class="card kpi-card">
+<p class="kpi-title">Profit</p>
+<h2 id="profit">Loading...</h2>
+</div>
+<div class="card kpi-card margin-kpi">
+<p class="kpi-title">Profit Margin</p>
+<div class="margin-gauge">
+<svg class="gauge-svg" viewbox="0 0 120 120">
+<circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+<circle class="gauge-progress" cx="60" cy="60" id="marginGauge" r="50"></circle>
+</svg>
+<div class="gauge-value"><h2 id="margin">Loading...</h2></div>
+</div>
+</div>
+<div class="card kpi-card">
+<div class="kpi-title">
+                Total Cost
+                </div>
+<h2 id="cost">
+                  €0
+                </h2>
+</div>
+<div class="card kpi-card">
+<p class="kpi-title">Units Sold</p>
+<h2 id="units">Loading...</h2>
+</div>
+</section>
+<section class="card">
+<div class="card-header">
+<div>
+<h3>Monthly Performance</h3>
+<p>Revenue and profit over time</p>
+</div>
+</div>
+<canvas id="monthlyChart"></canvas>
+</section>
+<section class="card insights-card">
+<div class="card-header">
+<div>
+<h3>🤖 Business Insights</h3>
+<p>Automatically generated from your data</p>
+</div>
+</div>
+<div id="insights">
+
+                Loading...
+
+            </div>
+</section>
+
+
+<section class="executive-grid">
+  <div class="card executive-health-card">
+    <div class="card-header">
+      <div><h3>Business Health</h3><p>Current performance snapshot</p></div>
+      <span id="healthScore" class="health-score">--</span>
+    </div>
+    <div class="health-grid">
+      <div><span>Revenue Growth</span><strong id="overviewGrowth">-</strong></div>
+      <div><span>Top Product</span><strong id="overviewTopProduct">-</strong></div>
+      <div><span>Top Region</span><strong id="overviewTopRegion">-</strong></div>
+      <div><span>Anomalies</span><strong id="overviewAnomalies">-</strong></div>
+    </div>
+  </div>
+  <div class="card executive-dataset-card">
+    <div class="card-header">
+      <div><h3>Active Dataset</h3><p>Live source powering this dashboard</p></div>
+      <span class="live-pill"><span class="status-dot"></span> Live</span>
+    </div>
+    <div class="active-dataset-large" id="activeDatasetDetail">Loading...</div>
+    <div class="dataset-meta-row">
+      <span id="overviewRows">- rows</span>
+      <span id="overviewDateRange">-</span>
+    </div>
+  </div>
+</section>
+
+<section class="card top-performers-card">
+  <div class="card-header">
+    <div><h3>Top & Bottom Performers</h3><p>Quick view of product and regional performance</p></div>
+  </div>
+  <div class="performer-grid">
+    <div class="performer-item"><span>🏆 Best Product</span><strong id="bestProduct">-</strong><small id="bestProductValue">-</small></div>
+    <div class="performer-item"><span>⚠️ Product to Watch</span><strong id="worstProduct">-</strong><small id="worstProductValue">-</small></div>
+    <div class="performer-item"><span>🌍 Best Region</span><strong id="bestRegion">-</strong><small id="bestRegionValue">-</small></div>
+    <div class="performer-item"><span>📍 Region to Watch</span><strong id="worstRegion">-</strong><small id="worstRegionValue">-</small></div>
+  </div>
+</section>
+
+<section class="card system-monitor-card">
+  <div class="card-header">
+    <div><h3>⚡ Live System Monitor</h3><p>Application components and data flow</p></div>
+    <span class="system-live-label"><span class="status-dot"></span> Operational</span>
+  </div>
+  <div class="system-flow">
+    <div class="system-node"><span class="system-icon">UI</span><strong>Frontend</strong><small>Dashboard</small></div>
+    <div class="flow-line"><span class="data-packet"></span></div>
+    <div class="system-node"><span class="system-icon">API</span><strong>FastAPI</strong><small>Backend</small></div>
+    <div class="flow-line"><span class="data-packet"></span></div>
+    <div class="system-node"><span class="system-icon">AI</span><strong>Analytics</strong><small>Engine</small></div>
+    <div class="flow-line"><span class="data-packet"></span></div>
+    <div class="system-node"><span class="system-icon">DB</span><strong>Database</strong><small>Data layer</small></div>
+  </div>
+  <div class="system-status-grid">
+    <span>Frontend <b id="systemFrontend">Online</b></span>
+    <span>API <b id="systemApi">Online</b></span>
+    <span>Analytics <b id="systemAnalytics">Online</b></span>
+    <span>Database <b id="systemDatabase">Online</b></span>
+  </div>
+</section>
+
+
+<section class="quick-actions-card card">
+  <div class="card-header"><div><h3>Workspace Actions</h3><p>Move from insight to decision.</p></div></div>
+  <div class="quick-actions-grid">
+    <a href="simulator.html">◈ <span><b>Run Scenario</b><small>Test business assumptions</small></span></a>
+    <a href="goals.html">◎ <span><b>Track Goals</b><small>Monitor targets</small></span></a>
+    <a href="reports.html">▣ <span><b>Generate Report</b><small>Create management summary</small></span></a>
+    <a href="alerts.html">♢ <span><b>View Alerts</b><small>Review business signals</small></span></a>
+  </div>
+</section>
+</main></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body data-page="dashboard">
+<nav class="main-nav">
+  <div class="nav-brand"><div class="brand-mark">BA</div><div><strong>Business Analytics</strong><span>Intelligence Platform</span></div></div>
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+  <div class="nav-spacer"></div><div class="nav-footer"><div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div><button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button></div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<header class="page-hero"><div><h1>My Dashboard</h1><p>Build a personalized analytics workspace from your business data.</p></div><div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div></header>
+<main class="dashboard page-content">
+<section class="card builder-card">
+  <div class="card-header"><div><h3>Dashboard Builder</h3><p>Create KPI cards and charts and save them to your personal workspace.</p></div></div>
+  <div class="dashboard-builder-form">
+    <div class="filter-group"><label>Title</label><input id="widgetTitle" placeholder="e.g. Revenue by Product"></div>
+    <div class="filter-group"><label>Widget type</label><select id="widgetType"><option value="kpi">KPI</option><option value="bar">Bar chart</option><option value="line">Line chart</option><option value="pie">Pie chart</option><option value="table">Table</option></select></div>
+    <div class="filter-group"><label>Metric</label><select id="widgetMetric"><option value="revenue">Revenue</option><option value="cost">Cost</option><option value="profit">Profit</option><option value="units">Units</option><option value="margin">Profit Margin</option></select></div>
+    <div class="filter-group"><label>Dimension</label><select id="widgetDimension"><option value="">None</option><option value="product">Product</option><option value="region">Region</option><option value="month">Month</option></select></div>
+    <button id="addWidgetButton" class="primary-button">+ Add Widget</button>
+  </div>
+  <p id="builderMessage" class="builder-message"></p>
+</section>
+<section><div id="customDashboardGrid" class="custom-dashboard-grid"></div></section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

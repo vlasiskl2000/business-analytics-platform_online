@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Panel - Business Analytics Platform</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div class="brand">
+            Business Analytics Platform
+        </div>
+
+        <div class="dashboard-status">
+            <span class="status-dot"></span>
+            <span>Admin</span>
+        </div>
+
+    </header>
+
+
+    <main class="dashboard page-content">
+
+        <div class="section-intro">
+
+            <span class="eyebrow">
+                Administration
+            </span>
+
+            <h2>
+                👑 Admin Panel
+            </h2>
+
+            <p>
+                Manage users and system roles.
+            </p>
+
+        </div>
+
+
+        <section class="card">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        User Management
+                    </span>
+
+                    <h3>
+                        Users
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table id="usersTable">
+
+                    <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="usersTableBody">
+
+                        <tr>
+
+                            <td colspan="5">
+                                Loading users...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="admin.js"></script>
+
+</body>
+
+</html>

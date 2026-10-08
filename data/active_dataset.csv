@@ -1,0 +1,17 @@
+date,product,region,sales,cost,units
+2026-01-01,Laptop,Athens,12500,8500,25
+2026-01-02,Monitor,Athens,6800,4200,34
+2026-01-03,Keyboard,Thessaloniki,3200,1800,80
+2026-01-04,Mouse,Thessaloniki,2100,1100,95
+2026-01-05,Laptop,Larissa,9200,6200,18
+2026-01-06,Monitor,Athens,7500,4600,38
+2026-01-07,Keyboard,Larissa,2800,1500,70
+2026-01-08,Mouse,Athens,2600,1350,110
+2026-02-01,Laptop,Athens,14800,9800,29
+2026-02-02,Monitor,Thessaloniki,8100,5000,41
+2026-02-03,Keyboard,Athens,3900,2100,92
+2026-02-04,Mouse,Larissa,2400,1250,100
+2026-02-05,Laptop,Thessaloniki,11300,7400,22
+2026-02-06,Monitor,Larissa,6200,3800,31
+2026-02-07,Keyboard,Thessaloniki,3500,1900,85
+2026-02-08,Mouse,Athens,2900,1500,120

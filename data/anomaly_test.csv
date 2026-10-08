@@ -1,0 +1,11 @@
+date,product,region,sales,cost,units
+2026-01-05,Laptop,Athens,10000,6000,20
+2026-01-15,Monitor,Athens,8000,4500,30
+2026-02-05,Laptop,Athens,11000,6500,22
+2026-02-15,Monitor,Athens,9000,5000,32
+2026-03-05,Laptop,Athens,12000,7000,24
+2026-03-15,Monitor,Athens,9500,5200,34
+2026-04-05,Laptop,Athens,30000,9000,60
+2026-04-15,Monitor,Athens,28000,8000,70
+2026-05-05,Laptop,Athens,13000,7500,26
+2026-05-15,Monitor,Athens,10000,5500,36

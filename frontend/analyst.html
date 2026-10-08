@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Analyst | Business Analytics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="analyst">
+
+<nav class="main-nav">
+  <div class="nav-brand">
+    <div class="brand-mark">BA</div>
+    <div>
+      <strong>Business Analytics</strong>
+      <span>Intelligence Platform</span>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-links">
+    <a href="index.html" data-page="overview"><span class="nav-icon">⌂</span><span>Overview</span></a>
+    <a href="sales.html" data-page="sales"><span class="nav-icon">▥</span><span>Sales</span></a>
+    <a href="forecast.html" data-page="forecast"><span class="nav-icon">⌁</span><span>Forecast</span></a>
+    <a href="anomalies.html" data-page="anomalies"><span class="nav-icon">!</span><span>Anomalies</span></a>
+    <a href="data.html" data-page="data"><span class="nav-icon">▤</span><span>Data</span></a>
+    <a href="analyst.html" data-page="analyst"><span class="nav-icon">✦</span><span>Business Analyst</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-icon">▦</span><span>My Dashboard</span></a>
+    <a href="simulator.html" data-page="simulator"><span class="nav-icon">◈</span><span>Simulator</span></a>
+    <a href="goals.html" data-page="goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+    <a href="reports.html" data-page="reports"><span class="nav-icon">▣</span><span>Reports</span></a>
+    <a href="alerts.html" data-page="alerts"><span class="nav-icon">♢</span><span>Alerts</span></a>
+    <a href="settings.html" data-page="settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+  </div>
+
+  <div class="nav-spacer"></div>
+  <div class="nav-footer">
+    <div class="workspace-status"><span class="status-dot"></span><div><strong>System Live</strong><span>Analytics engine ready</span></div></div>
+    <button id="logoutButton" class="nav-logout"><span>↪</span> Logout</button>
+  </div>
+</nav>
+<button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open navigation">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<header class="page-hero">
+  <div>
+    <h1>Business Analyst</h1>
+    <p>Ask questions and turn your business data into insights.</p>
+  </div>
+  <div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div>
+</header>
+<main class="dashboard page-content">
+
+<nav class="dashboard-nav">
+
+    <a href="index.html">
+        Dashboard
+    </a>
+
+    <a href="sales.html">
+        Sales
+    </a>
+
+    <a href="forecast.html">
+        Forecast
+    </a>
+
+    <a href="goals.html">
+        Goals
+    </a>
+
+    <a href="reports.html">
+        Reports
+    </a>
+
+    <a href="alerts.html">
+        Alerts
+    </a>
+
+    <a
+        id="adminNavLink"
+        href="admin.html"
+        style="display: none;"
+    >
+        👑 Admin Panel
+    </a>
+
+</nav>
+
+<div class="section-intro">
+    <span class="eyebrow">Analyst</span>
+    <h2>Ask your business data</h2>
+    <p>Use natural-language questions to get quick business analysis.</p>
+</div>
+
+<section class="card business-analyst-card">
+<section class="card business-analyst-card">
+<div class="card-header">
+<div>
+<h3>🤖 Business Analyst</h3>
+<p>Ask questions about your business data</p>
+</div>
+</div>
+<div class="business-question">
+<input id="businessQuestion" placeholder="e.g. Which product generates the highest revenue?" type="text"/>
+<button id="askBusinessQuestion">
+            Analyze
+        </button>
+</div>
+<div class="business-answer" id="businessAnswer">
+<p>
+            Ask a question to analyze your business data.
+        </p>
+</div>
+</section>
+<div class="card analyst-examples">
+  <div class="card-header"><div><h3>Example questions</h3><p>Try one of these prompts.</p></div></div>
+  <div class="example-grid">
+    <button class="question-example">Which product generates the highest revenue?</button>
+    <button class="question-example">Which region has the highest profit?</button>
+    <button class="question-example">Why did revenue decrease?</button>
+    <button class="question-example">Which product is the most profitable?</button>
+  </div>
+</div>
+
+
+<section class="card analyst-suggestions-card">
+  <div class="card-header"><div><h3>Suggested Analysis</h3><p>Start with a question or investigate a business area.</p></div></div>
+  <div class="analyst-suggestion-grid">
+    <button class="question-example">What is the most profitable product?</button>
+    <button class="question-example">Which region generates the highest revenue?</button>
+    <button class="question-example">Why did revenue decrease?</button>
+    <button class="question-example">Which product generates the highest revenue?</button>
+  </div>
+</section>
+<section class="card analyst-workflow-card">
+  <div class="card-header"><div><h3>How the Analyst Works</h3><p>Your question is mapped to the active dataset and analytics engine.</p></div></div>
+  <div class="analyst-flow">
+    <span>Question</span><b>→</b><span>Intent</span><b>→</b><span>Pandas Analysis</span><b>→</b><span>Business Answer</span>
+  </div>
+</section>
+
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
