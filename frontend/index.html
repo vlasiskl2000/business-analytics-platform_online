@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Business Analytics | Business Analytics</title>
 <link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="modern.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module" src="scene3d.js"></script>
+<script src="modern-ui.js" defer></script>
 </head>
 <body data-page="overview">
 
@@ -43,6 +50,12 @@
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div id="authScreen" class="auth-visible">
+<div class="auth-hero">
+  <span class="auth-badge">&#10022; Intelligence Platform</span>
+  <h2>Turn raw data into decisions.</h2>
+  <p>Upload your sales data and get live KPIs, forecasts, anomaly detection and an AI analyst that answers your business questions.</p>
+  <div class="auth-chips"><span>Forecasting</span><span>Anomaly detection</span><span>AI Analyst</span><span>3D insights</span></div>
+</div>
 <div class="auth-card">
 <h1>Business Analytics</h1>
 <p class="auth-subtitle">Sign in to your account</p>
@@ -137,6 +150,16 @@
 <p class="kpi-title">Units Sold</p>
 <h2 id="units">Loading...</h2>
 </div>
+</section>
+<section class="card sky-card">
+<div class="card-header">
+<div>
+<h3>3D Revenue Skyline</h3>
+<p>Monthly revenue and profit as an interactive 3D city</p>
+</div>
+<div class="sky-legend"><span><i class="lg-rev"></i>Revenue</span><span><i class="lg-pro"></i>Profit</span><span class="sky-hint">Drag to rotate &middot; hover a bar</span></div>
+</div>
+<div class="sky-stage" id="skyline3d"><div class="sky-empty" id="skyEmpty">Loading 3D view&hellip;</div></div>
 </section>
 <section class="card">
 <div class="card-header">

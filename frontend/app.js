@@ -159,6 +159,9 @@ async function loadMonthly() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/monthly-trend?${params}`);
     const monthly = await response.json();
+    // hand the data to the 3D skyline (scene3d.js) without coupling the two files
+    window.__baMonthly = monthly;
+    window.dispatchEvent(new CustomEvent("ba:monthly", {detail: monthly}));
     const canvas = document.getElementById("monthlyChart");
     const growthIndicator = document.getElementById("growthIndicator");
 
