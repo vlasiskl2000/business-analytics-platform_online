@@ -11,7 +11,9 @@
 <link rel="stylesheet" href="modern.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 <script type="module" src="scene3d.js"></script>
+<script type="module" src="charts3d.js"></script>
 <script src="modern-ui.js" defer></script>
+<script src="upload.js" defer></script>
 </head>
 <body data-page="goals">
 <nav class="main-nav">
@@ -50,7 +52,9 @@
 <header class="page-hero"><div><h1>Business Goals</h1><p>Set targets and track them against the active dataset.</p></div><div class="dashboard-status"><span class="status-dot"></span><span>Live Analytics</span></div></header>
 <main class="dashboard page-content"><div class="section-intro"><span class="eyebrow">Performance Management</span><h2>Goals & targets</h2><p>Turn analytics into measurable business objectives.</p></div>
 <section class="card goal-form-card"><div class="goal-form"><select id="goalMetric"><option value="revenue">Revenue</option><option value="profit">Profit</option><option value="margin">Profit Margin</option><option value="units">Units</option></select><input id="goalTarget" type="number" placeholder="Target value"><button id="addGoal" class="primary-action">Add Goal</button></div></section>
-<section id="goalsList" class="goals-list"></section></main>
+<section id="goalsList" class="goals-list"></section>
+<section class="card" data-chart3d="goals"></section>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="app.js"></script>
 </body>

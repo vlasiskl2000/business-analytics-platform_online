@@ -201,7 +201,7 @@
                 requestAnimationFrame(step);
             } else {
                 el.textContent = text; // exact original text at the end
-                setTimeout(function () { el.__baBusy = false; }, 0);
+                setTimeout(function () { el.__baBusy = false; fitEl(el); }, 0);
             }
         }
         requestAnimationFrame(step);
@@ -260,6 +260,79 @@
         }, 3500);
     }
 
+
+    /* ---------------------------------------------------------
+       5. Keep big numbers inside their boxes
+          (a revenue like EUR 72,203,136.00 is wider than a KPI tile)
+       --------------------------------------------------------- */
+    var FIT_SELECTOR = [
+        ".kpi-card h2", ".gauge-value h2", ".health-grid strong", ".performer-item strong",
+        ".performer-item small", ".forecast-metric strong", ".scenario-metric strong",
+        ".model-info-item strong", ".risk-grid strong", ".quality-grid strong",
+        ".report-kpis strong", ".detail-metrics strong", ".custom-kpi-value",
+        ".goal-item strong", ".comparison-metric strong", ".fit-num"
+    ].join(",");
+
+    function boxWidth(el) {
+        var cs = getComputedStyle(el);
+        var node = el;
+        if (cs.display === "inline") {
+            node = el.parentElement || el;
+            cs = getComputedStyle(node);
+        }
+        return node.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+    }
+
+    function textWidth(el) {
+        if (getComputedStyle(el).display === "inline") return el.getBoundingClientRect().width;
+        return el.scrollWidth;
+    }
+
+    function setSize(el, px) {
+        el.style.setProperty("font-size", px + "px", "important");
+    }
+
+    function fitEl(el) {
+        if (el.__baBusy) return;
+        var avail = boxWidth(el);
+        if (!(avail > 0)) return; // hidden for now - fitted again once it shows
+        var key = el.textContent + "|" + Math.round(avail);
+        if (el.__baFitKey === key) return;
+        el.style.removeProperty("font-size");
+        var size = parseFloat(getComputedStyle(el).fontSize);
+        var need = textWidth(el);
+        if (need > avail + 0.5) {
+            var min = Math.max(10, size * 0.5);
+            var next = Math.max(min, Math.floor((size * avail / need) * 100) / 100 - 0.3);
+            setSize(el, next);
+            var guard = 0;
+            while (textWidth(el) > avail + 0.5 && next > min && guard++ < 14) {
+                next = Math.max(min, next - 1);
+                setSize(el, next);
+            }
+        }
+        el.__baFitKey = key;
+    }
+
+    function fitAll(root) {
+        (root || document).querySelectorAll(FIT_SELECTOR).forEach(fitEl);
+    }
+    window.baFitAll = fitAll;
+
+    function setupFit() {
+        var queued = false;
+        function queue() {
+            if (queued) return;
+            queued = true;
+            requestAnimationFrame(function () { queued = false; fitAll(document); });
+        }
+        new MutationObserver(queue).observe(document.body, { childList: true, subtree: true, characterData: true });
+        window.addEventListener("resize", queue);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(queue);
+        [300, 1200, 3000].forEach(function (ms) { setTimeout(queue, ms); });
+        queue();
+    }
+
     /* ---------------------------------------------------------
        Boot
        --------------------------------------------------------- */
@@ -269,6 +342,7 @@
         setupTilt();
         setupCountUp();
         setupReveal();
+        setupFit();
         // tiles created later (dashboard widgets, KPI tiles on new pages)
         setTimeout(setupTilt, 1500);
     }

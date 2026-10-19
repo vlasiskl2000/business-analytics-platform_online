@@ -14,6 +14,13 @@ window.fetch = (input, init = {}) => {
 };
 
 
+// Publish data for the 3D charts (charts3d.js). The last payload is kept in
+// window.__ba so a chart that finishes loading later can still pick it up.
+function emit3d(name, detail) {
+    (window.__ba = window.__ba || {})[name] = detail;
+    window.dispatchEvent(new CustomEvent(name, {detail}));
+}
+
 function getAuthHeaders() {
     const token = localStorage.getItem("access_token");
     return token ? { "Authorization": `Bearer ${token}` } : {};
@@ -123,6 +130,7 @@ async function loadProducts() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/products?${params}`);
     const products = await response.json();
+    emit3d("ba:products", products);
     const canvas = document.getElementById("productChart");
     if (!canvas) return;
     if (productChart) productChart.destroy();
@@ -141,6 +149,7 @@ async function loadRegions() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/regions?${params}`);
     const regions = await response.json();
+    emit3d("ba:regions", regions);
     const canvas = document.getElementById("regionChart");
     if (!canvas) return;
     if (regionChart) regionChart.destroy();
@@ -159,9 +168,7 @@ async function loadMonthly() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/monthly-trend?${params}`);
     const monthly = await response.json();
-    // hand the data to the 3D skyline (scene3d.js) without coupling the two files
-    window.__baMonthly = monthly;
-    window.dispatchEvent(new CustomEvent("ba:monthly", {detail: monthly}));
+    emit3d("ba:monthly", monthly);
     const canvas = document.getElementById("monthlyChart");
     const growthIndicator = document.getElementById("growthIndicator");
 
@@ -281,6 +288,7 @@ async function loadForecast() {
 
     const historical = data.historical || [];
     const forecast = data.forecast || [];
+    emit3d("ba:forecast", {historical, forecast});
     const lastActual = historical.length ? historical[historical.length - 1].revenue : 0;
     const nextForecast = forecast.length ? forecast[0].revenue : 0;
     const growth = lastActual ? ((nextForecast - lastActual) / lastActual) * 100 : 0;
@@ -338,6 +346,10 @@ async function loadAnomalies() {
     const params=getFilterParams();
     const response=await fetch(`${API_URL}/api/anomalies?${params}`);
     const anomalies=await response.json();
+    try {
+        const monthly=await fetch(`${API_URL}/api/monthly-trend?${params}`).then(r=>r.json());
+        emit3d("ba:anomalies", {anomalies, monthly});
+    } catch(error) { console.warn("3D anomaly data unavailable:", error); }
     const box=document.getElementById("anomalyAlerts");
     if(!box) return;
     if(!anomalies.length){
@@ -351,7 +363,7 @@ async function loadAnomalies() {
         div.innerHTML=`
           <div class="anomaly-title">⚠️ ${a.date}</div>
           <div class="anomaly-message">${a.message}</div>
-          <div class="anomaly-growth">Change: ${Number(a.growth).toFixed(2)}%</div>
+          <div class="anomaly-growth">Change: ${Number(a.growth_percent ?? a.growth ?? 0).toFixed(2)}%</div>
           <button class="explain-button" data-date="${a.date}">Explain anomaly</button>
           <div class="anomaly-explanation" id="explain-${a.date.replaceAll("-","")}"></div>`;
         box.appendChild(div);
@@ -474,15 +486,28 @@ function renderPagination() {
     if(!box) return;
     const totalPages=Math.max(1,Math.ceil(filteredDatasetRows.length/rowsPerPage));
     box.innerHTML="";
-    const prev=document.createElement("button"); prev.textContent="Previous"; prev.disabled=currentPage===1;
-    prev.onclick=()=>{currentPage--;renderDatasetTable();};
-    box.appendChild(prev);
-    for(let i=1;i<=totalPages;i++){
-        const b=document.createElement("button"); b.textContent=i; b.className=i===currentPage?"active":"";
-        b.onclick=()=>{currentPage=i;renderDatasetTable();}; box.appendChild(b);
-    }
-    const next=document.createElement("button"); next.textContent="Next"; next.disabled=currentPage===totalPages;
-    next.onclick=()=>{currentPage++;renderDatasetTable();}; box.appendChild(next);
+    const add=(text,onClick,{active=false,disabled=false,gap=false}={})=>{
+        const b=document.createElement("button");
+        b.textContent=text;
+        if(gap){b.disabled=true;b.className="gap";}
+        else{
+            b.className=active?"active":"";
+            b.disabled=disabled;
+            if(onClick) b.onclick=onClick;
+        }
+        box.appendChild(b);
+    };
+    add("Previous",()=>{currentPage--;renderDatasetTable();},{disabled:currentPage===1});
+    // first, last and a window around the current page; "…" for the gaps
+    const pages=new Set([1,totalPages]);
+    for(let i=currentPage-2;i<=currentPage+2;i++) if(i>=1&&i<=totalPages) pages.add(i);
+    let prev=0;
+    [...pages].sort((a,b)=>a-b).forEach(i=>{
+        if(i-prev>1) add("…",null,{gap:true});
+        add(i,()=>{currentPage=i;renderDatasetTable();},{active:i===currentPage});
+        prev=i;
+    });
+    add("Next",()=>{currentPage++;renderDatasetTable();},{disabled:currentPage===totalPages});
 }
 
 function sortDataset(column) {
@@ -707,8 +732,18 @@ let overviewMonitorStarted = false;
 async function getActiveDatasetInfo(){
     try {
         const response = await fetch(`${API_URL}/api/datasets/active`);
-        if (!response.ok) return null;
-        return await response.json();
+        if (response.ok) return await response.json();
+        // Older backends have no /active route: use the dataset list instead.
+        const list = await fetch(`${API_URL}/api/datasets`);
+        if (!list.ok) return null;
+        const active = ((await list.json()).datasets || []).find(d => d.is_active);
+        if (!active) return null;
+        return {
+            active: true,
+            filename: active.filename || active.name,
+            rows: active.rows,
+            version: `${active.id}:${active.uploaded_at}`
+        };
     } catch(error) {
         return null;
     }
@@ -1015,6 +1050,7 @@ async function runSimulator(){
           <div class="sim-line"><span>Units</span><strong>${Number(x.units).toLocaleString("en-US",{maximumFractionDigits:0})}</strong></div>
           <div class="sim-line"><span>Average price</span><strong>${money(x.average_price)}</strong></div>`;
 
+        emit3d("ba:simulator", result);
         currentBox.innerHTML=render(result.current);
         scenarioBox.innerHTML=render(result.scenario);
 
@@ -1040,6 +1076,7 @@ async function refreshGoals(){
     const result=await fetch(`${API_URL}/api/goals`).then(r=>r.json());
     const kpi=await fetch(`${API_URL}/api/kpis`).then(r=>r.json());
     const values={revenue:kpi.total_revenue,profit:kpi.total_profit,margin:kpi.profit_margin,units:kpi.total_units};
+    emit3d("ba:goals", {goals: result.goals||[], values});
     const box=document.getElementById("goalsList");
     if(!box)return;
     box.innerHTML=(result.goals||[]).map(g=>{

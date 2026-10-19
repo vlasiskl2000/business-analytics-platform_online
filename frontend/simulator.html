@@ -11,7 +11,9 @@
 <link rel="stylesheet" href="modern.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 <script type="module" src="scene3d.js"></script>
+<script type="module" src="charts3d.js"></script>
 <script src="modern-ui.js" defer></script>
+<script src="upload.js" defer></script>
 </head>
 <body data-page="simulator">
 <nav class="main-nav">
@@ -54,7 +56,9 @@
 <div class="sim-control"><label>Units change <b id="unitValue">0%</b></label><input id="unitChange" type="range" min="-30" max="30" value="0"></div>
 <div class="sim-control"><label>Cost change <b id="costValue">0%</b></label><input id="costChange" type="range" min="-20" max="20" value="0"></div>
 </div><button id="runSimulator" class="primary-action">Run Scenario</button></section>
-<section class="scenario-results"><div class="card"><h3>Current</h3><div id="simCurrent" class="sim-metrics">Loading...</div></div><div class="card"><h3>Scenario</h3><div id="simScenario" class="sim-metrics">Adjust assumptions and run the scenario.</div></div></section><section class="card"><div class="card-header"><div><h3>Scenario Impact</h3><p>Difference versus the current dataset</p></div></div><div id="simImpact" class="sim-metrics">Run a scenario to see the impact.</div></section></main>
+<section class="scenario-results"><div class="card"><h3>Current</h3><div id="simCurrent" class="sim-metrics">Loading...</div></div><div class="card"><h3>Scenario</h3><div id="simScenario" class="sim-metrics">Adjust assumptions and run the scenario.</div></div></section><section class="card"><div class="card-header"><div><h3>Scenario Impact</h3><p>Difference versus the current dataset</p></div></div><div id="simImpact" class="sim-metrics">Run a scenario to see the impact.</div></section>
+<section class="card" data-chart3d="simulator"></section>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="app.js"></script>
 </body>

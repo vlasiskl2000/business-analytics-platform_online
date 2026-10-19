@@ -11,7 +11,9 @@
 <link rel="stylesheet" href="modern.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
 <script type="module" src="scene3d.js"></script>
+<script type="module" src="charts3d.js"></script>
 <script src="modern-ui.js" defer></script>
+<script src="upload.js" defer></script>
 </head>
 <body data-page="overview">
 
@@ -151,16 +153,7 @@
 <h2 id="units">Loading...</h2>
 </div>
 </section>
-<section class="card sky-card">
-<div class="card-header">
-<div>
-<h3>3D Revenue Skyline</h3>
-<p>Monthly revenue and profit as an interactive 3D city</p>
-</div>
-<div class="sky-legend"><span><i class="lg-rev"></i>Revenue</span><span><i class="lg-pro"></i>Profit</span><span class="sky-hint">Drag to rotate &middot; hover a bar</span></div>
-</div>
-<div class="sky-stage" id="skyline3d"><div class="sky-empty" id="skyEmpty">Loading 3D view&hellip;</div></div>
-</section>
+<section class="card" data-chart3d="monthly"></section>
 <section class="card">
 <div class="card-header">
 <div>
