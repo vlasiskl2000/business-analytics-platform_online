@@ -21,6 +21,15 @@ function emit3d(name, detail) {
     window.dispatchEvent(new CustomEvent(name, {detail}));
 }
 
+// Read a JSON list from an API response. An error answer (expired login,
+// server problem) becomes an empty list instead of breaking the page.
+async function readList(response) {
+    if (typeof handleUnauthorized === "function" && handleUnauthorized(response)) return [];
+    if (!response.ok) { console.error("API error", response.status, response.url); return []; }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+}
+
 function getAuthHeaders() {
     const token = localStorage.getItem("access_token");
     return token ? { "Authorization": `Bearer ${token}` } : {};
@@ -129,7 +138,7 @@ async function loadKPIs() {
 async function loadProducts() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/products?${params}`);
-    const products = await response.json();
+    const products = await readList(response);
     emit3d("ba:products", products);
     const canvas = document.getElementById("productChart");
     if (!canvas) return;
@@ -148,7 +157,7 @@ async function loadProducts() {
 async function loadRegions() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/regions?${params}`);
-    const regions = await response.json();
+    const regions = await readList(response);
     emit3d("ba:regions", regions);
     const canvas = document.getElementById("regionChart");
     if (!canvas) return;
@@ -167,7 +176,7 @@ async function loadRegions() {
 async function loadMonthly() {
     const params = getFilterParams();
     const response = await fetch(`${API_URL}/api/monthly-trend?${params}`);
-    const monthly = await response.json();
+    const monthly = await readList(response);
     emit3d("ba:monthly", monthly);
     const canvas = document.getElementById("monthlyChart");
     const growthIndicator = document.getElementById("growthIndicator");
@@ -788,16 +797,23 @@ async function loadOverview(){
         setText("overviewRows", `${Number(info.rows || 0).toLocaleString()} rows`);
     }
 
-    const meta = await fetch(`${API_URL}/api/metadata`).then(r => r.json());
-    setText("overviewDateRange", `${meta.date_min} → ${meta.date_max}`);
+    try {
+        const meta = await fetch(`${API_URL}/api/metadata`).then(r => r.json());
+        setText("overviewDateRange", `${meta.date_min} → ${meta.date_max}`);
+    } catch (error) {
+        console.error("Overview: metadata failed:", error);
+    }
 
-    await Promise.all([
+    // allSettled: one failing request must not stop the rest of the Overview.
+    const names = ["KPIs", "monthly trend", "insights", "top performers", "system health"];
+    const results = await Promise.allSettled([
         loadKPIs(),
         loadMonthly(),
         loadInsights(),
         loadOverviewPerformers(),
         loadSystemHealth()
     ]);
+    results.forEach((r, i) => { if (r.status === "rejected") console.error("Overview: " + names[i] + " failed:", r.reason); });
 
     startOverviewDatasetMonitor();
 }

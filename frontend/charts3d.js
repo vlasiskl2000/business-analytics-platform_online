@@ -426,10 +426,10 @@ class Chart3D {
 
         Object.keys(this.ad.events).forEach((ev) => {
             const key = this.ad.events[ev];
-            window.addEventListener(ev, (e) => { this.data[key] = e.detail; this.refresh(); });
+            window.addEventListener(ev, (e) => { this.data[key] = e.detail; this.safeRefresh(); });
             if (cache[ev] !== undefined) this.data[key] = cache[ev];
         });
-        this.refresh();
+        this.safeRefresh();
         requestAnimationFrame((t) => this.loop(t));
         card.__chart3d = this;
     }
@@ -596,6 +596,23 @@ class Chart3D {
     }
 
     /* ---------- data -> scene ---------- */
+    // refresh() that never throws: a problem is shown inside the card instead of
+    // leaving "Loading 3D view..." on screen forever.
+    safeRefresh() {
+        try {
+            this.refresh();
+        } catch (error) {
+            console.error("[charts3d] could not draw " + this.card.dataset.chart3d + ":", error);
+            this.showProblem("Could not draw this chart: " + (error && error.message ? error.message : error));
+        }
+    }
+
+    showProblem(text) {
+        if (!this.emptyEl) return;
+        this.emptyEl.style.display = "grid";
+        this.emptyEl.textContent = text;
+    }
+
     refresh() {
         const model = this.ad.build(this.data, this.state);
         this.model = model;
@@ -960,9 +977,16 @@ class Chart3D {
         if (!(growing || swaying || this.dragging || this.dirty)) return;
 
         this.currentYaw = this.orbit.yaw + (this.autoRotate ? Math.sin(now / 1000 * 0.35) * 0.3 * this.swayAmp : 0);
-        this.placeCamera(this.currentYaw);
-        this.renderer.render(this.scene, this.camera);
-        this.updateLabels();
+        try {
+            this.placeCamera(this.currentYaw);
+            this.renderer.render(this.scene, this.camera);
+            this.updateLabels();
+        } catch (error) {
+            console.error("[charts3d] render failed:", error);
+            this.gl = false;
+            this.showProblem("3D rendering failed (" + (error && error.message ? error.message : error) + "). The numbers on the right still work.");
+            return;
+        }
         this.dirty = false;
     }
 }
@@ -973,7 +997,10 @@ class Chart3D {
 function boot() {
     document.querySelectorAll("[data-chart3d]").forEach((card) => {
         if (card.__chart3d || !ADAPTERS[card.dataset.chart3d]) return;
-        try { new Chart3D(card); } catch (error) { console.warn("[charts3d] chart failed", error); }
+        try { new Chart3D(card); } catch (error) {
+            console.error("[charts3d] chart failed", error);
+            if (!card.querySelector(".sky-empty")) card.innerHTML = '<div class="sky-empty" style="display:grid">3D chart could not start: ' + esc(error && error.message ? error.message : error) + "</div>";
+        }
     });
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
