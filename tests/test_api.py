@@ -545,3 +545,59 @@ def test_landing_page_and_seo_files(client):
 
     assert client.get("/app").status_code == 200
     assert client.get("/").headers.get("x-content-type-options") == "nosniff"
+
+
+def test_upload_preview_and_flexible_upload(client):
+    from io import BytesIO
+    import pandas as pd
+
+    _, headers = register_and_login(client)
+    frame = pd.DataFrame({
+        "Ημερομηνία": pd.to_datetime(["2025-01-10", "2025-02-10", "2025-03-10"]),
+        "Κατηγορία": ["Καφές", "Τσάι", "Καφές"],
+        "Πόλη": ["Αθήνα", "Αθήνα", "Λάρισα"],
+        "Έσοδα": [100.5, 200.0, 300.0],
+        "Σχόλιο": ["a", "b", "c"],
+    })
+    buffer = BytesIO()
+    frame.to_excel(buffer, index=False)
+    files = {"file": ("πωλήσεις.xlsx", buffer.getvalue(),
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+
+    preview = client.post("/api/upload/preview", files=files, headers=headers).json()
+    assert preview["success"] is True
+    assert preview["mapping"]["sales"] == "Έσοδα" and preview["mapping"]["date"] == "Ημερομηνία"
+    assert [c["name"] for c in preview["columns"]][:2] == ["Ημερομηνία", "Κατηγορία"]
+
+    result = client.post("/api/upload", files=files, headers=headers).json()
+    assert result["success"] is True
+    assert result["filename"] == "πωλήσεις.csv"
+    assert result["summary"]["products"] == ["Καφές", "Τσάι"]
+    assert any("cost" in w.lower() for w in result["warnings"])
+
+    kpis = client.get("/api/kpis", headers=headers).json()
+    assert kpis["total_revenue"] == 600.5
+
+
+def test_upload_with_explicit_mapping_and_unreadable_choice(client):
+    import json
+
+    _, headers = register_and_login(client)
+    csv = b"d,x,y\n2025-01-01,10,5\n2025-01-02,20,6\n"
+    files = {"file": ("m.csv", csv, "text/csv")}
+
+    ok = client.post("/api/upload", files=files, headers=headers,
+                     data={"mapping": json.dumps({"date": "d", "sales": "y", "cost": "x"})}).json()
+    assert ok["success"] is True
+
+    bad = client.post("/api/upload", files=files, headers=headers,
+                      data={"mapping": json.dumps({"date": "x", "sales": "y"})}).json()
+    assert bad["success"] is False and "dates" in bad["message"]
+
+
+def test_upload_rejects_unsupported_files(client):
+    _, headers = register_and_login(client)
+    response = client.post("/api/upload", files={"file": ("a.pdf", b"x", "application/pdf")}, headers=headers)
+    assert response.status_code == 400
+    response = client.post("/api/upload", files={"file": ("a.xls", b"x", "application/vnd.ms-excel")}, headers=headers)
+    assert response.status_code == 400 and ".xlsx" in response.json()["detail"]

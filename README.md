@@ -37,6 +37,10 @@ FastAPI server (`http://127.0.0.1:8000/`) and not by double-clicking the HTML fi
 If WebGL or the CDN is unavailable the app still works, just without the 3D scene.
 
 
+## Uploading your own data
+
+Upload a `.csv` or `.xlsx` file from the **Upload data** button. Column names and order do not matter (English or Greek names are recognised, extra columns are ignored, European number formats and Excel dates work). The app suggests which column is the date, sales, category, group, cost and units; you can change each choice before importing. Only **date** and **sales** are required. Old `.xls` files must be saved as `.xlsx` first.
+
 ## Production checklist
 
 | Setting | What it does |

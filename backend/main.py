@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Query, UploadFile, File, Request
+import json
+
+from fastapi import FastAPI, Query, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, HTTPException
@@ -36,6 +38,7 @@ from backend.auth import (
     REGISTER_MAX_PER_WINDOW,
     REGISTER_WINDOW_SECONDS
 )
+from . import column_mapper
 from .insights import generate_insights
 from backend.forecasting import (
     forecast_revenue,
@@ -322,51 +325,91 @@ def business_question(question: str,
     )
 
     return result
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+ALLOWED_UPLOAD_EXTENSIONS = (".csv", ".txt", ".tsv", ".xlsx", ".xlsm")
+
+
+async def _read_upload(file: UploadFile) -> tuple[bytes, str]:
+    filename = os.path.basename(file.filename or "")
+    if not filename.lower().endswith(ALLOWED_UPLOAD_EXTENSIONS):
+        if filename.lower().endswith(".xls"):
+            raise HTTPException(status_code=400, detail="Old .xls files are not supported. Save the file as .xlsx or .csv.")
+        raise HTTPException(status_code=400, detail="Please upload a .csv or .xlsx file.")
+    # Keep uploads bounded so an oversized file cannot use unlimited memory.
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="File is too large. Maximum size is 10 MB.")
+    return contents, filename
+
+
+@app.post("/api/upload/preview")
+async def upload_preview(
+    file: UploadFile = File(...),
+    sheet: str | None = Form(default=None),
+    current_user: str = Depends(get_current_user)
+):
+    """Read a CSV/Excel file and suggest which column is which. Nothing is saved."""
+    contents, filename = await _read_upload(file)
+    try:
+        sheets = column_mapper.list_sheets(contents, filename)
+        table = column_mapper.read_table(contents, filename, sheet)
+        suggestion = column_mapper.suggest_mapping(table)
+        preview_rows = table.head(8).astype(object).where(table.head(8).notna(), "").astype(str).replace(r" 00:00:00$", "", regex=True).values.tolist()
+        columns = column_mapper.describe_columns(table)
+    except column_mapper.MappingError as error:
+        return {"success": False, "message": str(error)}
+
+    return {
+        "success": True,
+        "filename": filename,
+        "sheets": sheets,
+        "sheet": sheet if sheet in sheets else (sheets[0] if sheets else None),
+        "rows": int(len(table)),
+        "columns": columns,
+        "preview_rows": preview_rows,
+        "mapping": suggestion["mapping"],
+        "confidence": suggestion["confidence"],
+        "fields": [
+            {"key": key, "label": column_mapper.FIELD_LABELS[key], "required": key in column_mapper.REQUIRED}
+            for key in column_mapper.FIELDS
+        ]
+    }
+
+
 @app.post("/api/upload")
 async def upload_csv(
     file: UploadFile = File(...),
+    mapping: str | None = Form(default=None),
+    sheet: str | None = Form(default=None),
     current_user: str = Depends(get_current_user)
 ):
-    filename = file.filename or ""
-    if not filename.lower().endswith(".csv"):
-        return {"success": False, "message": "Please upload a CSV file."}
-
-    # Keep uploads bounded so a malformed/oversized file cannot consume
-    # unlimited memory in the API process.
-    max_upload_size = 10 * 1024 * 1024
-    contents = await file.read()
-    if len(contents) > max_upload_size:
-        raise HTTPException(status_code=413, detail="CSV file is too large. Maximum size is 10 MB.")
+    """Save a CSV/Excel file. Without `mapping` the columns are detected automatically."""
+    contents, filename = await _read_upload(file)
+    chosen: dict = {}
 
     try:
-        from io import StringIO
-        data = pd.read_csv(StringIO(contents.decode("utf-8-sig")))
-    except (UnicodeDecodeError, pd.errors.ParserError, ValueError):
-        return {"success": False, "message": "Could not read the CSV file. Use a valid UTF-8 CSV."}
-
-    if data.empty:
-        return {"success": False, "message": "The CSV file contains no rows."}
-
-    required_columns = ["date", "product", "region", "sales", "cost", "units"]
-    missing_columns = [c for c in required_columns if c not in data.columns]
-    if missing_columns:
-        return {"success": False, "message": "Missing required columns.", "missing_columns": missing_columns}
-
-    try:
-        data["date"] = pd.to_datetime(data["date"], errors="raise")
-        for column in ["sales", "cost", "units"]:
-            data[column] = pd.to_numeric(data[column], errors="raise")
-    except (TypeError, ValueError):
-        return {"success": False, "message": "Invalid values in date, sales, cost or units columns."}
-
-    if data[["sales", "cost", "units"]].isna().any().any():
-        return {"success": False, "message": "Sales, cost and units cannot contain empty values."}
-
-    if not data["sales"].map(pd.notna).all() or not data["cost"].map(pd.notna).all():
-        return {"success": False, "message": "Dataset contains invalid numeric values."}
+        table = column_mapper.read_table(contents, filename, sheet)
+        if mapping:
+            try:
+                chosen = json.loads(mapping)
+                if not isinstance(chosen, dict):
+                    raise ValueError
+            except ValueError:
+                return {"success": False, "message": "The column choices could not be read."}
+        else:
+            chosen = column_mapper.suggest_mapping(table)["mapping"]
+        data, warnings = column_mapper.apply_mapping(table, chosen)
+    except column_mapper.MappingError as error:
+        missing = [f for f in column_mapper.REQUIRED if not chosen.get(f)]
+        return {
+            "success": False,
+            "message": str(error),
+            "needs_mapping": True,
+            "missing_columns": missing
+        }
 
     user_dir = get_user_data_dir(current_user)
-    safe_name = os.path.basename(filename)
+    safe_name = os.path.splitext(filename)[0] + ".csv"
     dataset_path = os.path.join(user_dir, safe_name)
     active_path = get_active_dataset_path(current_user)
 
@@ -380,7 +423,9 @@ async def upload_csv(
         "message": "Dataset uploaded successfully.",
         "filename": safe_name,
         "rows": len(data),
-        "columns": list(data.columns)
+        "columns": list(data.columns),
+        "warnings": warnings,
+        "summary": column_mapper.summarize(data)
     }
 
 @app.get("/api/datasets")
