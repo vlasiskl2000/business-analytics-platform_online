@@ -601,3 +601,25 @@ def test_upload_rejects_unsupported_files(client):
     assert response.status_code == 400
     response = client.post("/api/upload", files={"file": ("a.xls", b"x", "application/vnd.ms-excel")}, headers=headers)
     assert response.status_code == 400 and ".xlsx" in response.json()["detail"]
+
+
+def test_labels_follow_the_uploaded_columns(client):
+    _, headers = register_and_login(client)
+
+    assert client.get("/api/labels", headers=headers).json() == {"product": "Product", "region": "Region"}
+
+    csv_content = "Ημερομηνία,Κατηγορία,Κατάστημα,Πωλήσεις\n2026-01-01,Καφές,Κέντρο,10\n2026-01-02,Σνακ,Πυλαία,5\n"
+    result = client.post(
+        "/api/upload",
+        files={"file": ("shop.csv", csv_content.encode("utf-8"), "text/csv")},
+        headers=headers,
+    ).json()
+    assert result["success"] is True
+    assert client.get("/api/labels", headers=headers).json() == {"product": "Κατηγορία", "region": "Κατάστημα"}
+
+    # another user is not affected
+    _, other = register_and_login(client)
+    assert client.get("/api/labels", headers=other).json()["product"] == "Product"
+
+    client.post("/api/reset", headers=headers)
+    assert client.get("/api/labels", headers=headers).json()["product"] == "Product"

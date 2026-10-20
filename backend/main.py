@@ -39,6 +39,7 @@ from backend.auth import (
     REGISTER_WINDOW_SECONDS
 )
 from . import column_mapper
+from . import labels as label_store
 from .insights import generate_insights
 from backend.forecasting import (
     forecast_revenue,
@@ -415,6 +416,9 @@ async def upload_csv(
 
     data.to_csv(dataset_path, index=False)
     data.to_csv(active_path, index=False)
+    # Remember what the user's own columns are called ("Κατηγορία", "Store"...)
+    label_store.save_labels(label_store.sidecar_path(dataset_path), chosen.get("product"), chosen.get("region"))
+    label_store.copy_labels(label_store.sidecar_path(dataset_path), label_store.sidecar_path(active_path))
 
     save_dataset(safe_name, safe_name, datetime.now().isoformat(), len(data), current_user)
 
@@ -453,7 +457,9 @@ def load_dataset(dataset_id: int, current_user: str = Depends(get_current_user))
 
     data = pd.read_csv(filepath)
     data["date"] = pd.to_datetime(data["date"])
-    data.to_csv(get_active_dataset_path(current_user), index=False)
+    active_path = get_active_dataset_path(current_user)
+    data.to_csv(active_path, index=False)
+    label_store.copy_labels(label_store.sidecar_path(filepath), label_store.sidecar_path(active_path))
     set_active_dataset(dataset_id, current_user)
 
     return {"success": True, "message": "Dataset loaded successfully.", "filename": filename, "rows": len(data)}
@@ -472,6 +478,7 @@ def delete_dataset_endpoint(dataset_id: int, current_user: str = Depends(get_cur
     filepath = os.path.join(get_user_data_dir(current_user), os.path.basename(filename))
     if os.path.exists(filepath):
         os.remove(filepath)
+    label_store.remove_labels(label_store.sidecar_path(filepath))
 
     return {"success": True, "message": "Dataset deleted successfully.", "filename": filename}
 
@@ -481,9 +488,17 @@ def reset_dataset(current_user: str = Depends(get_current_user)):
     active_path = get_active_dataset_path(current_user)
     if os.path.exists(active_path):
         os.remove(active_path)
+    label_store.remove_labels(label_store.sidecar_path(active_path))
 
     clear_active_dataset(current_user)
     return {"success": True, "message": "Dataset reset to default."}
+
+
+@app.get("/api/labels")
+def get_labels(current_user: str = Depends(get_current_user)):
+    """Names the user gave to the category and group columns (for page labels)."""
+    path = label_store.sidecar_path(get_active_dataset_path(current_user))
+    return label_store.read_labels(path)
 
 
 @app.get("/api/metadata")
