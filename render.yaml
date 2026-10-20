@@ -10,3 +10,14 @@ services:
         generateValue: true
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "60"
+      # Free plan: uploads and the database are stored in the project's
+      # "data" folder and are wiped on every restart/deploy.
+      # To keep data, use a paid plan and uncomment BOTH the DATA_DIR variable
+      # and the disk below (the paths must match).
+      # - key: DATA_DIR
+      #   value: /var/data
+    # plan: starter
+    # disk:
+    #   name: app-data
+    #   mountPath: /var/data
+    #   sizeGB: 1

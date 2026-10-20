@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Query, UploadFile, File
+from fastapi import FastAPI, Query, UploadFile, File, Request
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 import pandas as pd
 from .data_loader import load_sales_data, filter_sales_data, get_active_dataset_path, get_user_data_dir
 from .analytics import (
@@ -24,7 +25,16 @@ from backend.auth import (
     verify_password,
     create_access_token,
     get_current_user,
-    require_role
+    require_role,
+    client_ip,
+    rate_limit_check,
+    rate_limit_record,
+    rate_limit_clear,
+    LOGIN_MAX_FAILURES,
+    LOGIN_MAX_FAILURES_PER_IP,
+    LOGIN_WINDOW_SECONDS,
+    REGISTER_MAX_PER_WINDOW,
+    REGISTER_WINDOW_SECONDS
 )
 from .insights import generate_insights
 from backend.forecasting import (
@@ -76,9 +86,48 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    if request.headers.get("x-forwarded-proto") == "https" or request.url.scheme == "https":
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return response
+
+
+# Public pages: "/" is the landing page (indexed by search engines),
+# "/app" is the application (login + dashboard).
 @app.get("/")
 def home():
-    return FileResponse(os.path.join(frontend_dir, "index.html"))
+    return FileResponse(os.path.join(frontend_dir, "landing.html"))
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt(request: Request):
+    base = str(request.base_url).rstrip("/")
+    return (
+        "User-agent: *\n"
+        "Allow: /$\n"
+        "Allow: /landing.css\n"
+        "Disallow: /api/\n"
+        "Disallow: /app\n"
+        "Disallow: /index.html\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml(request: Request):
+    base = str(request.base_url).rstrip("/")
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"<url><loc>{base}/</loc></url>"
+        "</urlset>"
+    )
+    return Response(content=xml, media_type="application/xml")
 
 
 @app.get("/api/kpis")
@@ -788,42 +837,49 @@ def report_data(current_user: str = Depends(get_current_user)):
     }
 
 
-@app.post("/api/register")
-def register_user(
-    username: str,
+class Credentials(BaseModel):
+    """Sent in the request body (never in the URL, which ends up in logs)."""
+    username: str
     password: str
-):
 
-    username = username.strip()
+
+@app.post("/api/register")
+def register_user(credentials: Credentials, request: Request):
+    ip_key = f"register:{client_ip(request)}"
+    rate_limit_check(ip_key, REGISTER_MAX_PER_WINDOW, REGISTER_WINDOW_SECONDS)
+
+    username = credentials.username.strip()
+    password = credentials.password
 
     if not username or not password:
-
         return {
             "success": False,
             "message": "Username and password are required."
         }
 
-    if len(password) < 6:
+    if len(username) > 64 or len(password) > 256:
+        return {
+            "success": False,
+            "message": "Username or password is too long."
+        }
 
+    if len(password) < 6:
         return {
             "success": False,
             "message": "Password must contain at least 6 characters."
         }
 
-    existing_user = get_user(username)
+    rate_limit_record(ip_key, REGISTER_WINDOW_SECONDS)
 
-    if existing_user:
-
+    if get_user(username):
         return {
             "success": False,
             "message": "Username already exists."
         }
 
-    password_hash = hash_password(password)
-
     create_user(
         username,
-        password_hash,
+        hash_password(password),
         datetime.now().isoformat()
     )
 
@@ -832,36 +888,33 @@ def register_user(
         "message": "User registered successfully.",
         "username": username
     }
+
+
 @app.post("/api/login")
-def login_user(
-    username: str,
-    password: str
-):
+def login_user(credentials: Credentials, request: Request):
+    username = credentials.username.strip()
+    password = credentials.password
+    ip = client_ip(request)
+    key = f"login:{ip}:{username.lower()}"
+    ip_key = f"login-ip:{ip}"
+    rate_limit_check(key, LOGIN_MAX_FAILURES, LOGIN_WINDOW_SECONDS)
+    rate_limit_check(ip_key, LOGIN_MAX_FAILURES_PER_IP, LOGIN_WINDOW_SECONDS)
 
     user = get_user(username)
 
-    if user is None:
-
+    if user is None or not verify_password(password, user[2]):
+        rate_limit_record(key, LOGIN_WINDOW_SECONDS)
+        rate_limit_record(ip_key, LOGIN_WINDOW_SECONDS)
         return {
             "success": False,
             "message": "Invalid username or password."
         }
 
-    password_hash = user[2]
-
-    if not verify_password(
-        password,
-        password_hash
-    ):
-
-        return {
-            "success": False,
-            "message": "Invalid username or password."
-        }
+    rate_limit_clear(key)
 
     access_token = create_access_token(
-    username,
-    user[4]
+        username,
+        user[4]
     )
 
     return {
@@ -870,6 +923,8 @@ def login_user(
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+
 @app.get("/api/auth-test")
 def auth_test(
     current_user: str = Depends(get_current_user)

@@ -2,7 +2,10 @@ import os
 import re
 import pandas as pd
 
+# Sample data shipped with the project (read only).
 DEFAULT_DATASET = "data/sales.csv"
+# Uploaded files and per-user data live in DATA_DIR (a persistent disk in production).
+DATA_DIR = os.getenv("DATA_DIR", "data")
 
 
 def _safe_username(username: str | None) -> str:
@@ -11,7 +14,7 @@ def _safe_username(username: str | None) -> str:
 
 
 def get_user_data_dir(username: str | None = None):
-    folder = os.path.join("data", "users", _safe_username(username))
+    folder = os.path.join(DATA_DIR, "users", _safe_username(username))
     os.makedirs(folder, exist_ok=True)
     return folder
 

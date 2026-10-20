@@ -1,11 +1,13 @@
 import sqlite3
 import os
 
-DATABASE_PATH = "data/business_analytics.db"
+# DATA_DIR can point to a persistent disk in production (for example /var/data).
+DATA_DIR = os.getenv("DATA_DIR", "data")
+DATABASE_PATH = os.path.join(DATA_DIR, "business_analytics.db")
 
 
 def get_connection():
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(os.path.dirname(DATABASE_PATH) or ".", exist_ok=True)
     return sqlite3.connect(DATABASE_PATH)
 
 

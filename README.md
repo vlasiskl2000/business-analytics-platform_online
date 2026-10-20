@@ -35,3 +35,35 @@ The frontend has a modern 3D layer on top of the original pages:
 Three.js is loaded from a CDN (jsDelivr) as an ES module, so open the app through the
 FastAPI server (`http://127.0.0.1:8000/`) and not by double-clicking the HTML files.
 If WebGL or the CDN is unavailable the app still works, just without the 3D scene.
+
+
+## Production checklist
+
+| Setting | What it does |
+|---|---|
+| `SECRET_KEY` | Signs login tokens. Set a long random value (Render generates one). If it is missing, a random key is created at each start and everyone is logged out on restart. |
+| `DATA_DIR` | Folder for the SQLite database and uploaded CSV files. Point it to a persistent disk (default: `data`). |
+| `CORS_ORIGINS` | Only needed if the frontend is served from another domain. |
+| `LOGIN_MAX_FAILURES` / `LOGIN_WINDOW_SECONDS` | Failed logins allowed per IP + username in the window (default 5 per 900 s), then HTTP 429. |
+
+Login and registration send the credentials in the JSON request body (`POST /api/login`, `POST /api/register`), never in the URL.
+
+### Docker
+
+```bash
+docker build -t business-analytics .
+docker run -p 8000:8000 -e SECRET_KEY=change-me -v ba-data:/data business-analytics
+```
+
+### Being found on Google
+
+- `/` is a public landing page (title, description, structured data). The app itself is at `/app` and is marked `noindex`.
+- `/robots.txt` and `/sitemap.xml` are generated automatically from the domain the site is served on.
+- After deploying on your own domain: add it in Google Search Console, verify ownership, submit `https://YOUR-DOMAIN/sitemap.xml` and request indexing of the home page.
+
+### Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```

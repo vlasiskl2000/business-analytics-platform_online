@@ -21,6 +21,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DATABASE_PATH", str(db_path))
 
     from backend.main import app
+    from backend import auth
+    auth.rate_limit_reset_all()
     database.create_tables()
 
     with TestClient(app) as test_client:

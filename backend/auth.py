@@ -1,8 +1,10 @@
 import os
 import secrets
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from dotenv import load_dotenv
@@ -130,3 +132,68 @@ def require_role(*allowed_roles):
         return current_user
 
     return role_checker
+
+
+# ---------------------------------------------------------------------------
+# Simple in-memory rate limiting (per server process).
+# Protects login and registration against password guessing and spam.
+# Limits can be changed with environment variables.
+# ---------------------------------------------------------------------------
+LOGIN_MAX_FAILURES = int(os.getenv("LOGIN_MAX_FAILURES", "5"))
+LOGIN_WINDOW_SECONDS = int(os.getenv("LOGIN_WINDOW_SECONDS", "900"))
+LOGIN_MAX_FAILURES_PER_IP = int(os.getenv("LOGIN_MAX_FAILURES_PER_IP", "25"))
+REGISTER_MAX_PER_WINDOW = int(os.getenv("REGISTER_MAX_PER_WINDOW", "10"))
+REGISTER_WINDOW_SECONDS = int(os.getenv("REGISTER_WINDOW_SECONDS", "3600"))
+
+_rate_lock = threading.Lock()
+_rate_events: dict[str, list[float]] = {}
+
+
+def client_ip(request: Request) -> str:
+    # Behind a proxy (Render, nginx) the address is in X-Forwarded-For. The proxy
+    # appends to the list, so the LAST entry is the one it vouches for; the first
+    # entries can be invented by the client.
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[-1].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _recent(key: str, window: int) -> list[float]:
+    now = time.monotonic()
+    events = [t for t in _rate_events.get(key, []) if now - t < window]
+    if events:
+        _rate_events[key] = events
+    else:
+        _rate_events.pop(key, None)
+    return events
+
+
+def rate_limit_check(key: str, limit: int, window: int):
+    """Raise 429 when `key` already used up `limit` events in the window."""
+    with _rate_lock:
+        events = _recent(key, window)
+        if len(events) >= limit:
+            wait = int(window - (time.monotonic() - events[0])) + 1
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many attempts. Please try again in {max(1, wait // 60)} minute(s).",
+                headers={"Retry-After": str(wait)}
+            )
+
+
+def rate_limit_record(key: str, window: int):
+    with _rate_lock:
+        _recent(key, window)
+        _rate_events.setdefault(key, []).append(time.monotonic())
+
+
+def rate_limit_clear(key: str):
+    with _rate_lock:
+        _rate_events.pop(key, None)
+
+
+def rate_limit_reset_all():
+    """Used by the tests."""
+    with _rate_lock:
+        _rate_events.clear()

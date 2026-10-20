@@ -7,14 +7,14 @@ def register_and_login(client):
 
     response = client.post(
         "/api/register",
-        params={"username": username, "password": password},
+        json={"username": username, "password": password},
     )
     assert response.status_code == 200
     assert response.json()["success"] is True
 
     response = client.post(
         "/api/login",
-        params={"username": username, "password": password},
+        json={"username": username, "password": password},
     )
     assert response.status_code == 200
     body = response.json()
@@ -506,3 +506,42 @@ def test_admin_can_update_user_role(client):
     assert data["success"] is True
     assert data["user"]["username"] == username_analyst
     assert data["user"]["role"] == "manager"
+
+
+def test_credentials_in_url_are_not_accepted(client):
+    response = client.post("/api/login", params={"username": "a", "password": "b"})
+    assert response.status_code == 422
+
+
+def test_login_is_rate_limited_after_repeated_failures(client):
+    from backend import auth
+
+    auth.rate_limit_reset_all()
+    username, _ = register_and_login(client)
+
+    for _ in range(auth.LOGIN_MAX_FAILURES):
+        response = client.post("/api/login", json={"username": username, "password": "wrong-password"})
+        assert response.status_code == 200
+        assert response.json()["success"] is False
+
+    blocked = client.post("/api/login", json={"username": username, "password": "StrongPass123!"})
+    assert blocked.status_code == 429
+    assert "Retry-After" in blocked.headers
+    auth.rate_limit_reset_all()
+
+
+def test_landing_page_and_seo_files(client):
+    home = client.get("/")
+    assert home.status_code == 200
+    assert "<title>" in home.text and 'name="description"' in home.text
+
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert "Sitemap:" in robots.text and "Disallow: /api/" in robots.text
+
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    assert "<loc>" in sitemap.text
+
+    assert client.get("/app").status_code == 200
+    assert client.get("/").headers.get("x-content-type-options") == "nosniff"

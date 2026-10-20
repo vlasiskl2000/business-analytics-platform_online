@@ -697,8 +697,9 @@ async function register(){
     if(!username||!password||!confirm){msg.textContent="Please fill in all fields.";return;}
     if(password!==confirm){msg.textContent="Passwords do not match.";return;}
     msg.textContent="Creating account...";
-    const response=await fetch(`${API_URL}/api/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:"POST"});
+    const response=await fetch(`${API_URL}/api/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
     const result=await response.json();
+    if(response.status===429){msg.textContent=result.detail||"Too many attempts. Please try again later.";return;}
     if(!result.success){msg.textContent=result.message||"Registration failed.";return;}
     showLogin();
     document.getElementById("authMessage").textContent="Account created successfully. Please login.";
@@ -714,7 +715,8 @@ async function login(){
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),10000);
     try{
-        const response=await fetch(`${API_URL}/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,{method:"POST",signal:controller.signal});
+        const response=await fetch(`${API_URL}/api/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password}),signal:controller.signal});
+        if(response.status===429){const info=await response.json().catch(()=>({}));msg.textContent=info.detail||"Too many attempts. Please try again later.";return;}
         if(!response.ok) throw new Error(`Server returned ${response.status}`);
         const result=await response.json();
         if(!result.success){msg.textContent=result.message||"Login failed.";return;}
