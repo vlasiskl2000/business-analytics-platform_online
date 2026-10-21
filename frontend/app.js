@@ -302,8 +302,8 @@ async function loadForecast() {
     const nextForecast = forecast.length ? forecast[0].revenue : 0;
     const growth = lastActual ? ((nextForecast - lastActual) / lastActual) * 100 : 0;
 
-    set("lastActualRevenue", `€${Number(lastActual).toLocaleString("en-US",{minimumFractionDigits:2})}`);
-    set("nextForecastRevenue", `€${Number(nextForecast).toLocaleString("en-US",{minimumFractionDigits:2})}`);
+    set("lastActualRevenue", `€${Number(lastActual).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+    set("nextForecastRevenue", `€${Number(nextForecast).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`);
     set("forecastGrowth", `${growth.toFixed(2)}%`);
 
     const canvas = document.getElementById("forecastChart");
@@ -403,8 +403,8 @@ async function explainAnomaly(date) {
         <div class="explanation-grid">
           <div><span>Top product</span><strong>${result.top_product || "-"}</strong></div>
           <div><span>Top region</span><strong>${result.top_region || "-"}</strong></div>
-          <div><span>Current revenue</span><strong>€${Number(result.current_revenue || 0).toLocaleString("en-US",{minimumFractionDigits:2})}</strong></div>
-          <div><span>Previous revenue</span><strong>€${Number(result.previous_revenue || 0).toLocaleString("en-US",{minimumFractionDigits:2})}</strong></div>
+          <div><span>Current revenue</span><strong>€${Number(result.current_revenue || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></div>
+          <div><span>Previous revenue</span><strong>€${Number(result.previous_revenue || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></div>
         </div>
       </div>`;
 }
@@ -1066,7 +1066,7 @@ async function runSimulator(){
           <div class="sim-line"><span>Profit</span><strong>${money(x.profit)}</strong></div>
           <div class="sim-line"><span>Margin</span><strong>${Number(x.margin).toFixed(1)}%</strong></div>
           <div class="sim-line"><span>Units</span><strong>${Number(x.units).toLocaleString("en-US",{maximumFractionDigits:0})}</strong></div>
-          <div class="sim-line"><span>Average price</span><strong>${money(x.average_price)}</strong></div>`;
+          <div class="sim-line"><span>Average price</span><strong>€${Number(x.average_price).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></div>`;
 
         emit3d("ba:simulator", result);
         currentBox.innerHTML=render(result.current);
@@ -1125,6 +1125,7 @@ async function generateReport(){
     const period=document.getElementById("reportPeriod").value;
     const k=r.kpis;
     const box=document.getElementById("reportPreview");
+    if(!k){ box.innerHTML="<p>The report could not be created. Check that a dataset is loaded and try again.</p>"; return; }
     box.innerHTML=`
       <div class="report-sheet">
         <div class="report-header"><div><span>BUSINESS ANALYTICS</span><h2>${title}</h2><p>${period}</p></div><button class="secondary-action" onclick="window.print()">Print / Save PDF</button></div>

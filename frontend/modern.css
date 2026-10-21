@@ -1679,3 +1679,51 @@ body:has(#authScreen.auth-visible) .mobile-nav-toggle { display: none !important
 
 /* the [hidden] attribute must win over display rules on modal buttons and steps */
 .upload-modal [hidden] { display: none !important; }
+
+/* Simulator: label above value so narrow cards never glue them together */
+.scenario-results .sim-metrics .sim-line {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    min-width: 0;
+}
+.scenario-results .sim-metrics .sim-line span { font-size: 12px; color: #64748b; }
+.scenario-results .sim-metrics .sim-line strong { white-space: nowrap; }
+
+/* ---- Sidebar on short screens: everything (incl. Logout) must stay visible ---- */
+@media (max-height: 980px) and (min-width: 901px) {
+    .main-nav .nav-links { gap: 2px !important; }
+    .main-nav .nav-links a { padding: 7px 12px !important; }
+    .main-nav .nav-brand { padding-top: 14px !important; padding-bottom: 12px !important; margin-bottom: 8px !important; }
+    .main-nav .nav-section-label { margin: 8px 0 4px !important; }
+    .nav-footer { gap: 8px !important; padding-top: 8px !important; padding-bottom: 12px !important; }
+    .nav-footer .workspace-status { padding: 8px 10px !important; }
+    .nav-upload, .nav-logout { padding-top: 9px !important; padding-bottom: 9px !important; }
+}
+@media (max-height: 860px) and (min-width: 901px) {
+    .nav-footer .workspace-status { display: none !important; }
+    .main-nav .nav-links a { padding: 5px 12px !important; }
+}
+@media (max-height: 700px) and (min-width: 901px) {
+    .main-nav .nav-section-label, .nav-brand span { display: none !important; }
+}
+/* the floating sidebar sits 14px from the top and bottom: its height must not be 100vh */
+@media (min-width: 901px) {
+    .main-nav { height: calc(100vh - 28px) !important; min-height: 0 !important; max-height: calc(100vh - 28px) !important; }
+}
+@media (max-height: 780px) and (min-width: 901px) {
+    .main-nav .nav-links a { padding: 3px 12px !important; font-size: 13px !important; }
+    .main-nav .nav-brand { padding-top: 8px !important; padding-bottom: 6px !important; margin-bottom: 4px !important; }
+    .nav-upload { display: none !important; }   /* the header and floating buttons still open the same dialog */
+}
+@media (max-height: 780px) and (min-width: 901px) {
+    .main-nav .nav-section-label, .nav-brand span { display: none !important; }
+    .main-nav .nav-links a { padding: 2px 12px !important; }
+    .main-nav .nav-links { gap: 0 !important; }
+}
+@media (max-height: 690px) and (min-width: 901px) {
+    .main-nav .nav-brand { display: none !important; }
+    .main-nav .nav-links a { padding: 1px 12px !important; font-size: 12px !important; }
+}

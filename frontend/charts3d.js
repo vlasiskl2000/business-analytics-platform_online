@@ -252,13 +252,18 @@ const ADAPTERS = {
                 };
             });
             const list = a.anomalies || [];
-            const gOf = (x) => Number(x.growth_percent ?? x.growth ?? 0);
-            const stats = [{ k: "Detected events", v: String(list.length), s: list.length ? "of " + m.length + " months" : "all months normal", t: list.length ? "down" : "up" }];
-            if (list.length) {
-                const up = list.reduce((b, x) => (gOf(x) > gOf(b) ? x : b), list[0]);
-                const dn = list.reduce((b, x) => (gOf(x) < gOf(b) ? x : b), list[0]);
-                stats.push({ k: "Biggest jump", v: sgn(gOf(up)), s: up.date, t: gOf(up) >= 0 ? "up" : "down" });
-                stats.push({ k: "Biggest drop", v: sgn(gOf(dn)), s: dn.date, t: gOf(dn) >= 0 ? "up" : "down" });
+                        const stats = [{ k: "Detected events", v: String(list.length), s: list.length ? "of " + m.length + " months" : "all months normal", t: list.length ? "down" : "up" }];
+            // biggest jump / drop over ALL months (not only the flagged ones)
+            const withG = m.filter((x) => x.growth_percent !== null && x.growth_percent !== undefined && Number.isFinite(Number(x.growth_percent)));
+            if (withG.length) {
+                const up = withG.reduce((b, x) => (Number(x.growth_percent) > Number(b.growth_percent) ? x : b), withG[0]);
+                const dn = withG.reduce((b, x) => (Number(x.growth_percent) < Number(b.growth_percent) ? x : b), withG[0]);
+                stats.push(Number(up.growth_percent) > 0
+                    ? { k: "Biggest jump", v: sgn(Number(up.growth_percent)), s: up.date, t: "up" }
+                    : { k: "Biggest jump", v: "none", s: "no month grew", t: "down" });
+                stats.push(Number(dn.growth_percent) < 0
+                    ? { k: "Biggest drop", v: sgn(Number(dn.growth_percent)), s: dn.date, t: "down" }
+                    : { k: "Biggest drop", v: "none", s: "no month fell", t: "up" });
             }
             const avgG = m.length > 1 ? m.slice(1).reduce((s, x) => s + x.growth_percent, 0) / (m.length - 1) : 0;
             stats.push({ k: "Average change", v: sgn(avgG), s: "month over month", t: tone(avgG) });
