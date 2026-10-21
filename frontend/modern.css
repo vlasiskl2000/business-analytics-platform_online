@@ -1727,3 +1727,77 @@ body:has(#authScreen.auth-visible) .mobile-nav-toggle { display: none !important
     .main-nav .nav-brand { display: none !important; }
     .main-nav .nav-links a { padding: 1px 12px !important; font-size: 12px !important; }
 }
+
+/* ---------- Demo, password reset, recovery code, account card ---------- */
+#authScreen .auth-card > button.auth-demo {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(103, 232, 249, 0.45) !important;
+    color: #67e8f9 !important;
+    box-shadow: none !important;
+    margin-top: 10px !important;
+    font-weight: 700;
+    cursor: pointer;
+}
+#authScreen .auth-card > button.auth-demo:hover { background: rgba(103, 232, 249, 0.12) !important; }
+#authScreen .auth-card > button.auth-primary {
+    background: linear-gradient(135deg, #6d5dfc, #8b5cf6) !important;
+    color: #fff !important; border: 0 !important; border-radius: 12px !important; cursor: pointer;
+}
+#authScreen .auth-card > button.auth-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+#authScreen .auth-links { text-align: center; margin-top: 6px; }
+#authScreen .auth-link {
+    background: none !important; border: 0 !important; color: #67e8f9 !important;
+    font-size: 13px; cursor: pointer; padding: 4px 8px !important; width: auto !important;
+}
+#authScreen .auth-link:hover { text-decoration: underline; }
+#authScreen .auth-terms {
+    display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 12px;
+    color: rgba(214, 221, 255, 0.8); font-size: 13px; line-height: 1.45; text-align: left; cursor: pointer;
+}
+#authScreen .auth-terms a { color: #67e8f9; }
+#authScreen .auth-card input[type="checkbox"] {
+    width: 18px !important; height: 18px !important; min-width: 18px; margin: 2px 0 0 !important;
+    padding: 0 !important; display: inline-block; accent-color: #7c6cf0;
+}
+#authScreen .auth-msg, #authScreen #resetMessage { min-height: 20px; margin: 12px 0 0 !important; text-align: center; font-size: 13px; color: #c7d2fe; }
+#authScreen .recovery-box {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 16px; margin: 4px 0 16px; border-radius: 14px;
+    border: 1px dashed rgba(103, 232, 249, 0.6); background: rgba(103, 232, 249, 0.08);
+}
+#authScreen .recovery-box code {
+    font: 700 17px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 1.5px; color: #fff; overflow-wrap: anywhere; user-select: all;
+}
+
+.demo-bar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2500;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;
+    max-width: calc(100vw - 28px); padding: 10px 14px; border-radius: 16px;
+    background: rgba(12, 16, 40, 0.92); color: #dfe4ff; font-size: 13px;
+    border: 1px solid rgba(103, 232, 249, 0.4);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+.demo-bar .demo-pill { padding: 3px 9px; border-radius: 999px; background: #22d3ee; color: #06223a; font-weight: 800; font-size: 11px; letter-spacing: 1px; }
+.demo-bar button { border: 0; border-radius: 10px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-size: 13px; }
+.demo-bar .demo-create { background: linear-gradient(135deg, #6d5dfc, #8b5cf6); color: #fff; }
+.demo-bar .demo-exit { background: rgba(255, 255, 255, 0.1); color: #dfe4ff; }
+body.is-demo .nav-upload, body.is-demo .hero-upload, body.is-demo .fab-upload,
+body.is-demo .upload-area, body.is-demo .load-dataset, body.is-demo .delete-dataset { display: none !important; }
+
+.account-card .acc-note { color: #64748b; font-size: 13px; margin-bottom: 14px; }
+.account-card .acc-block { padding: 14px 0; border-top: 1px solid rgba(100, 116, 139, 0.2); }
+.account-card .acc-block h4 { font-size: 14px; margin: 0 0 4px; color: #111827; }
+.account-card .acc-block p { color: #64748b; font-size: 13px; margin: 0 0 10px; }
+.account-card .acc-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.account-card .acc-row input { flex: 1 1 160px; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid #dbe2ea; background: #fff; font-size: 14px; }
+.account-card .acc-btn { padding: 10px 16px; border-radius: 10px; border: 0; font-weight: 700; cursor: pointer; color: #fff; background: linear-gradient(135deg, #6d5dfc, #8b5cf6); }
+.account-card .acc-btn.danger { background: #dc2626; }
+.account-card .acc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.account-card .acc-msg { margin: 8px 0 0 !important; min-height: 18px; color: #475569 !important; }
+.account-card .acc-code { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px dashed #6d5dfc; background: #f5f3ff; margin-bottom: 6px; }
+.account-card .acc-code code { font: 700 16px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 1.2px; color: #111827; overflow-wrap: anywhere; user-select: all; }
+.account-card .acc-code span { font-size: 12px; color: #6b7280; }
+.account-card .acc-danger h4 { color: #b91c1c; }
+.account-card [hidden] { display: none !important; }

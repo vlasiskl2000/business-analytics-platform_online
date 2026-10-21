@@ -693,14 +693,22 @@ async function register(){
     const username=document.getElementById("registerUsername").value.trim();
     const password=document.getElementById("registerPassword").value;
     const confirm=document.getElementById("registerConfirmPassword").value;
+    const accepted=!!document.getElementById("registerTerms")?.checked;
     const msg=document.getElementById("registerMessage");
     if(!username||!password||!confirm){msg.textContent="Please fill in all fields.";return;}
     if(password!==confirm){msg.textContent="Passwords do not match.";return;}
+    if(!accepted){msg.textContent="Please accept the Terms of Use and the Privacy Policy.";return;}
     msg.textContent="Creating account...";
-    const response=await fetch(`${API_URL}/api/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
+    const response=await fetch(`${API_URL}/api/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password,accepted_terms:accepted})});
     const result=await response.json();
     if(response.status===429){msg.textContent=result.detail||"Too many attempts. Please try again later.";return;}
     if(!result.success){msg.textContent=result.message||"Registration failed.";return;}
+    msg.textContent="";
+    ["registerUsername","registerPassword","registerConfirmPassword"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+    if(window.baShowRecovery){
+        window.baShowRecovery(result.recovery_code,"Account created","Save this recovery code now. If you forget your password, it is the only way to reset it. It is shown once.","Account created. You can sign in now.");
+        return;
+    }
     showLogin();
     document.getElementById("authMessage").textContent="Account created successfully. Please login.";
 }

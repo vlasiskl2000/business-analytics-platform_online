@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend ./backend
 COPY frontend ./frontend
 # Sample dataset used before a user uploads their own file
-COPY data/sales.csv ./data/sales.csv
+COPY data/sales.csv data/demo_sales.csv ./data/
 
 # Uploads and the SQLite database live in /data: mount a volume here to keep them
 RUN useradd --create-home appuser && mkdir -p /data && chown -R appuser /data /app

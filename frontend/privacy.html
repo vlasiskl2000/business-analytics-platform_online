@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy – Business Analytics Platform</title>
+<meta name="description" content="What data Business Analytics Platform stores, why, for how long, and how to download or delete it.">
+<meta name="theme-color" content="#070a1c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%237c6cf0'/%3E%3Cpath d='M16 44V30h8v14zm12 0V20h8v24zm12 0V26h8v18z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="landing.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><span class="logo" aria-hidden="true">BA</span>Business Analytics</a>
+    <nav class="links" aria-label="Main"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a class="btn" href="/app">Open the app</a></nav>
+  </header>
+  <main class="doc">
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: 21 October 2026</p>
+
+    <p>This policy explains what happens to your data when you use Business Analytics Platform (&ldquo;the service&rdquo;). We keep it short and specific to what the service really does.</p>
+
+    <h2>1. Who is responsible</h2>
+    <p>The service is run by <span data-operator>the operator of this website</span>. You can contact them at <span data-contact>the contact address published by the site owner</span> for any question about your data.</p>
+
+    <h2>2. What we store</h2>
+    <ul>
+      <li><strong>Account:</strong> your username, the date you registered, and your role. Your password is never stored: only a one-way hash (Argon2). The same applies to your recovery code.</li>
+      <li><strong>Your files:</strong> the CSV or Excel files you upload, converted to a standard table, and the names you gave to your columns.</li>
+      <li><strong>What you create:</strong> goals, alerts, dashboard widgets and the list of your datasets.</li>
+      <li><strong>In your browser:</strong> a sign-in token and a few display preferences, kept in your browser&rsquo;s local storage. We do not use advertising or tracking cookies and we do not run analytics.</li>
+      <li><strong>Technical data:</strong> your IP address is used briefly in the server&rsquo;s memory to limit repeated sign-in attempts. The hosting provider may keep ordinary server logs (such as IP address and time of requests).</li>
+    </ul>
+    <p>We do not ask for your name, e-mail address or phone number to create an account. Please do not upload personal data about other people (for example, customer names) unless you are allowed to. The analyses work with totals, categories and dates.</p>
+
+    <h2>3. Why we use it</h2>
+    <p>Only to provide the service: to sign you in, calculate your statistics, forecasts and alerts, keep your datasets available, and protect the service from abuse. We do not sell your data, we do not use it for advertising, and your analyses are calculated on the server without sending your data to any third-party AI or analytics service.</p>
+    <p>Legal basis (GDPR): performing the service you asked for (Art. 6(1)(b)) and our legitimate interest in keeping it secure (Art. 6(1)(f)).</p>
+
+    <h2>4. Who else is involved</h2>
+    <ul>
+      <li><strong>Hosting provider:</strong> your data is stored on the servers of the company that hosts the service.</li>
+      <li><strong>Fonts and scripts:</strong> your browser loads fonts from Google Fonts and chart/3D libraries from the jsDelivr content network. Those services receive your IP address when your browser asks them for these files.</li>
+    </ul>
+
+    <h2>5. How long we keep it</h2>
+    <p>Until you delete it. When you delete a dataset it is removed. When you delete your account, your account, datasets, goals, alerts and dashboards are removed from the live system immediately. Copies in the hosting provider&rsquo;s backups, if any, disappear when those backups expire. Unused accounts may be removed after a long period of inactivity.</p>
+
+    <h2>6. Your rights</h2>
+    <p>You can, at any time and for free:</p>
+    <ul>
+      <li><strong>Get a copy</strong> of your data: Settings &rarr; <em>Your data &amp; privacy</em> &rarr; <em>Download my data</em>.</li>
+      <li><strong>Delete</strong> your account and everything in it: Settings &rarr; <em>Delete my account</em>.</li>
+      <li><strong>Correct</strong> or <strong>object</strong> to the use of your data, or ask any question, by contacting us (section 1).</li>
+    </ul>
+    <p>If you are in the European Union you may also complain to your data protection authority. In Greece this is the Hellenic Data Protection Authority (<a href="https://www.dpa.gr" rel="noopener">dpa.gr</a>).</p>
+
+    <h2>7. Demo mode</h2>
+    <p>The demo uses shared sample data, needs no account and collects no personal data. Everything is read-only.</p>
+
+    <h2>8. Security</h2>
+    <p>Connections are encrypted (HTTPS) when the service is served over HTTPS, passwords and recovery codes are hashed, each account can only see its own data, and repeated sign-in attempts are limited. No online service can be perfectly secure, so please use a strong, unique password and keep your recovery code safe: <strong>without your password and your recovery code we cannot recover your account.</strong></p>
+
+    <h2>9. Children</h2>
+    <p>The service is meant for business use by adults and is not directed to children under 16.</p>
+
+    <h2>10. Changes</h2>
+    <p>If this policy changes in a way that matters, we will update the date above and, where appropriate, tell you in the app.</p>
+  </main>
+  <footer>&copy; <span id="yr">2026</span> Business Analytics Platform &middot; <a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Use</a></footer>
+</div>
+<script>
+(function () {
+  try { document.getElementById("yr").textContent = new Date().getFullYear(); } catch (e) {}
+  fetch("/api/site-info").then(function (r) { return r.ok ? r.json() : {}; }).then(function (i) {
+    document.querySelectorAll("[data-operator]").forEach(function (el) { if (i.operator) el.textContent = i.operator; });
+    document.querySelectorAll("[data-contact]").forEach(function (el) {
+      if (!i.contact_email) return;
+      var a = document.createElement("a"); a.href = "mailto:" + i.contact_email; a.textContent = i.contact_email;
+      el.textContent = ""; el.appendChild(a);
+    });
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>

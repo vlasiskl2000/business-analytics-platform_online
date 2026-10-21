@@ -16,6 +16,8 @@
 <script src="modern-ui.js" defer></script>
 <script src="upload.js" defer></script>
 <script src="labels.js" defer></script>
+<script src="demo.js" defer></script>
+<script src="auth-extras.js" defer></script>
 </head>
 <body data-page="overview">
 
@@ -66,7 +68,9 @@
 <input type="text" id="loginUsername" placeholder="Username">
 <input type="password" id="loginPassword" placeholder="Password">
 <button id="loginButton">Login</button>
+<button type="button" class="auth-demo" data-demo>Try the demo &mdash; no account needed</button>
 <p id="authMessage"></p>
+<div class="auth-links"><button type="button" id="showReset" class="auth-link">Forgot password?</button></div>
 <div class="register-link">Don't have an account? <button id="showRegister">Register</button></div>
 </div>
 <div class="auth-card" id="registerCard" style="display:none;">
@@ -75,9 +79,28 @@
 <input type="text" id="registerUsername" placeholder="Username">
 <input type="password" id="registerPassword" placeholder="Password">
 <input type="password" id="registerConfirmPassword" placeholder="Confirm password">
+<label class="auth-terms"><input type="checkbox" id="registerTerms"><span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Use</a> and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span></label>
 <button id="registerButton">Register</button>
 <p id="registerMessage"></p>
 <div class="register-link">Already have an account? <button id="showLogin">Login</button></div>
+</div>
+<div class="auth-card" id="resetCard" style="display:none;">
+<h1>Reset password</h1>
+<p class="auth-subtitle">Use the recovery code you saved when you registered</p>
+<input type="text" id="resetUsername" placeholder="Username" autocomplete="username">
+<input type="text" id="resetCode" placeholder="Recovery code (XXXX-XXXX-XXXX-XXXX)" autocomplete="off" spellcheck="false">
+<input type="password" id="resetPassword" placeholder="New password" autocomplete="new-password">
+<input type="password" id="resetPassword2" placeholder="Confirm new password" autocomplete="new-password">
+<button type="button" id="resetButton" class="auth-primary">Set new password</button>
+<p id="resetMessage" class="auth-msg"></p>
+<div class="register-link">No recovery code? Your data cannot be recovered without it. <button type="button" id="resetBack">Back to login</button></div>
+</div>
+<div class="auth-card" id="recoveryCard" style="display:none;">
+<h1 id="recoveryTitle">Save your recovery code</h1>
+<p class="auth-subtitle" id="recoveryNote"></p>
+<div class="recovery-box"><code id="recoveryCode"></code><button type="button" id="recoveryCopy" class="auth-link">Copy</button></div>
+<label class="auth-terms"><input type="checkbox" id="recoverySaved"><span>I have saved my recovery code</span></label>
+<button type="button" id="recoveryContinue" class="auth-primary" disabled>Continue</button>
 </div>
 </div><div id="dashboard" class="overview-wrapper overview-hidden"><header class="page-hero">
   <div>

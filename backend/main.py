@@ -1,11 +1,13 @@
 import json
+import re
+import shutil
 
 from fastapi import FastAPI, Query, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 import pandas as pd
 from .data_loader import load_sales_data, filter_sales_data, get_active_dataset_path, get_user_data_dir
 from .analytics import (
@@ -29,6 +31,13 @@ from backend.auth import (
     get_current_user,
     require_role,
     client_ip,
+    generate_recovery_code,
+    hash_recovery_code,
+    verify_recovery_code,
+    token_role,
+    DEMO_USERNAME,
+    DEMO_ROLE,
+    RESERVED_USERNAMES,
     rate_limit_check,
     rate_limit_record,
     rate_limit_clear,
@@ -63,7 +72,13 @@ from backend.database import (
     get_dashboard_widgets,
     delete_dashboard_widget,
     update_dashboard_positions,
-    update_user_role
+    update_user_role,
+    get_recovery_hash,
+    set_recovery_hash,
+    update_password,
+    export_account,
+    delete_account,
+    username_exists_ci
 )
 create_tables()
 app = FastAPI(
@@ -108,6 +123,16 @@ def home():
     return FileResponse(os.path.join(frontend_dir, "landing.html"))
 
 
+@app.get("/privacy")
+def privacy_page():
+    return FileResponse(os.path.join(frontend_dir, "privacy.html"))
+
+
+@app.get("/terms")
+def terms_page():
+    return FileResponse(os.path.join(frontend_dir, "terms.html"))
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt(request: Request):
     base = str(request.base_url).rstrip("/")
@@ -115,6 +140,8 @@ def robots_txt(request: Request):
         "User-agent: *\n"
         "Allow: /$\n"
         "Allow: /landing.css\n"
+        "Allow: /privacy\n"
+        "Allow: /terms\n"
         "Disallow: /api/\n"
         "Disallow: /app\n"
         "Disallow: /index.html\n"
@@ -129,6 +156,8 @@ def sitemap_xml(request: Request):
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         f"<url><loc>{base}/</loc></url>"
+        f"<url><loc>{base}/privacy</loc></url>"
+        f"<url><loc>{base}/terms</loc></url>"
         "</urlset>"
     )
     return Response(content=xml, media_type="application/xml")
@@ -903,8 +932,22 @@ class Credentials(BaseModel):
     password: str
 
 
+class RegisterRequest(Credentials):
+    accepted_terms: bool = False
+
+
+class PasswordResetRequest(BaseModel):
+    username: str
+    recovery_code: str
+    new_password: str
+
+
+class PasswordConfirm(BaseModel):
+    password: str
+
+
 @app.post("/api/register")
-def register_user(credentials: Credentials, request: Request):
+def register_user(credentials: RegisterRequest, request: Request):
     ip_key = f"register:{client_ip(request)}"
     rate_limit_check(ip_key, REGISTER_MAX_PER_WINDOW, REGISTER_WINDOW_SECONDS)
 
@@ -923,15 +966,29 @@ def register_user(credentials: Credentials, request: Request):
             "message": "Username or password is too long."
         }
 
+    # Each username gets its own data folder, so only safe characters are allowed:
+    # otherwise "bob!" and "bob_" would end up sharing (and deleting) the same folder.
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{3,64}", username):
+        return {
+            "success": False,
+            "message": "Username must be 3-64 characters: letters, numbers, dot, dash or underscore."
+        }
+
     if len(password) < 6:
         return {
             "success": False,
             "message": "Password must contain at least 6 characters."
         }
 
+    if not credentials.accepted_terms:
+        return {
+            "success": False,
+            "message": "Please accept the Terms of Use and the Privacy Policy."
+        }
+
     rate_limit_record(ip_key, REGISTER_WINDOW_SECONDS)
 
-    if get_user(username):
+    if username.lower() in RESERVED_USERNAMES or username_exists_ci(username):
         return {
             "success": False,
             "message": "Username already exists."
@@ -943,10 +1000,15 @@ def register_user(credentials: Credentials, request: Request):
         datetime.now().isoformat()
     )
 
+    # Shown once: lets the user reset a forgotten password without e-mail.
+    recovery_code = generate_recovery_code()
+    set_recovery_hash(username, hash_recovery_code(recovery_code))
+
     return {
         "success": True,
         "message": "User registered successfully.",
-        "username": username
+        "username": username,
+        "recovery_code": recovery_code
     }
 
 
@@ -985,6 +1047,124 @@ def login_user(credentials: Credentials, request: Request):
     }
 
 
+# ---------------------------------------------------------------------------
+# Demo access, password reset, data export and account deletion
+# ---------------------------------------------------------------------------
+DEMO_MESSAGE = "Demo mode is read-only. Create an account to upload your own data."
+# POST requests that a demo visitor may still make (they do not change stored data)
+DEMO_ALLOWED_POSTS = {"/api/business-question", "/api/login", "/api/register",
+                      "/api/reset-password", "/api/demo-login"}
+
+
+@app.middleware("http")
+async def demo_is_read_only(request: Request, call_next):
+    path = request.url.path
+    if (request.method in ("POST", "PUT", "PATCH", "DELETE")
+            and path.startswith("/api/") and path not in DEMO_ALLOWED_POSTS):
+        header = request.headers.get("authorization", "")
+        if header.lower().startswith("bearer ") and token_role(header[7:].strip()) == DEMO_ROLE:
+            return JSONResponse({"detail": DEMO_MESSAGE}, status_code=403)
+    return await call_next(request)
+
+
+@app.post("/api/demo-login")
+def demo_login(request: Request):
+    """Sign in as the shared read-only demo visitor (sample data, nothing can be changed)."""
+    ip_key = f"demo:{client_ip(request)}"
+    rate_limit_check(ip_key, 60, 3600)
+    rate_limit_record(ip_key, 3600)
+    return {
+        "success": True,
+        "demo": True,
+        "access_token": create_access_token(DEMO_USERNAME, DEMO_ROLE),
+        "token_type": "bearer"
+    }
+
+
+@app.get("/api/site-info")
+def site_info():
+    """Contact details shown on the privacy and terms pages (set in the environment)."""
+    return {
+        "contact_email": os.getenv("CONTACT_EMAIL", ""),
+        "operator": os.getenv("OPERATOR_NAME", "")
+    }
+
+
+def _check_password(username: str, password: str, request: Request):
+    """Verify the current user's password (rate limited). Raises 429 when guessing."""
+    key = f"pw:{client_ip(request)}:{username.lower()}"
+    rate_limit_check(key, LOGIN_MAX_FAILURES, LOGIN_WINDOW_SECONDS)
+    user = get_user(username)
+    if user is None or not verify_password(password, user[2]):
+        rate_limit_record(key, LOGIN_WINDOW_SECONDS)
+        return False
+    rate_limit_clear(key)
+    return True
+
+
+@app.post("/api/reset-password")
+def reset_password(body: PasswordResetRequest, request: Request):
+    """Set a new password using the recovery code that was shown at registration."""
+    username = body.username.strip()
+    ip = client_ip(request)
+    key = f"reset:{ip}:{username.lower()}"
+    ip_key = f"reset-ip:{ip}"
+    rate_limit_check(key, LOGIN_MAX_FAILURES, LOGIN_WINDOW_SECONDS)
+    rate_limit_check(ip_key, LOGIN_MAX_FAILURES_PER_IP, LOGIN_WINDOW_SECONDS)
+
+    if len(body.new_password) < 6 or len(body.new_password) > 256:
+        return {"success": False, "message": "The new password must contain at least 6 characters."}
+
+    user = get_user(username)
+    stored = get_recovery_hash(username) if user else None
+    if user is None or not verify_recovery_code(body.recovery_code, stored):
+        rate_limit_record(key, LOGIN_WINDOW_SECONDS)
+        rate_limit_record(ip_key, LOGIN_WINDOW_SECONDS)
+        return {"success": False, "message": "The username or the recovery code is not correct."}
+
+    new_code = generate_recovery_code()
+    update_password(username, hash_password(body.new_password), hash_recovery_code(new_code))
+    rate_limit_clear(key)
+    rate_limit_clear(f"login:{ip}:{username.lower()}")
+    return {
+        "success": True,
+        "message": "Password changed. Save your new recovery code: the old one no longer works.",
+        "recovery_code": new_code
+    }
+
+
+@app.post("/api/account/recovery-code")
+def new_recovery_code(body: PasswordConfirm, request: Request, current_user: str = Depends(get_current_user)):
+    """Create a fresh recovery code (also for accounts made before codes existed)."""
+    if not _check_password(current_user, body.password, request):
+        return {"success": False, "message": "The password is not correct."}
+    code = generate_recovery_code()
+    set_recovery_hash(current_user, hash_recovery_code(code))
+    return {"success": True, "recovery_code": code}
+
+
+@app.get("/api/account/export")
+def export_my_data(current_user: str = Depends(get_current_user)):
+    """Download everything stored about the account as a JSON file."""
+    payload = export_account(current_user)
+    payload["exported_at"] = datetime.now().isoformat()
+    return JSONResponse(
+        payload,
+        headers={"Content-Disposition": 'attachment; filename="my-data.json"'}
+    )
+
+
+@app.post("/api/account/delete")
+def delete_my_account(body: PasswordConfirm, request: Request, current_user: str = Depends(get_current_user)):
+    """Permanently delete the account, its datasets and everything else stored for it."""
+    if not _check_password(current_user, body.password, request):
+        return {"success": False, "message": "The password is not correct."}
+    user_dir = get_user_data_dir(current_user)
+    delete_account(current_user)
+    shutil.rmtree(user_dir, ignore_errors=True)
+    return {"success": True, "message": "Your account and all its data were deleted."}
+
+
 @app.get("/api/auth-test")
 def auth_test(
     current_user: str = Depends(get_current_user)
@@ -997,7 +1177,7 @@ def auth_test(
     }
 @app.get("/api/me")
 def get_me(
-    current_user: dict = Depends(require_role("analyst", "manager", "admin"))
+    current_user: dict = Depends(require_role("analyst", "manager", "admin", "demo"))
 ):
     return {
         "success": True,

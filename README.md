@@ -47,10 +47,17 @@ Upload a `.csv` or `.xlsx` file from the **Upload data** button. Column names an
 |---|---|
 | `SECRET_KEY` | Signs login tokens. Set a long random value (Render generates one). If it is missing, a random key is created at each start and everyone is logged out on restart. |
 | `DATA_DIR` | Folder for the SQLite database and uploaded CSV files. Point it to a persistent disk (default: `data`). |
+| `CONTACT_EMAIL` / `OPERATOR_NAME` | Shown on the Privacy Policy and Terms pages as the contact for data requests. **Set these before going public.** |
 | `CORS_ORIGINS` | Only needed if the frontend is served from another domain. |
 | `LOGIN_MAX_FAILURES` / `LOGIN_WINDOW_SECONDS` | Failed logins allowed per IP + username in the window (default 5 per 900 s), then HTTP 429. |
 
 Login and registration send the credentials in the JSON request body (`POST /api/login`, `POST /api/register`), never in the URL.
+
+### Demo, accounts and legal pages
+
+- **Demo:** the landing page has a *Try the demo* button. It signs in to a shared read-only account (`demo-visitor`) that shows `data/demo_sales.csv`; uploads and other changes are refused by the server.
+- **Recovery codes:** there is no e-mail. Registration shows a one-time recovery code; *Forgot password?* uses it to set a new password (and issues a new code). Signed-in users can create a new code in Settings.
+- **Privacy and deletion:** `/privacy` and `/terms` are served by the app. Settings has *Download my data* (JSON) and *Delete my account* (removes the account, goals and uploaded files). The legal texts are templates, not legal advice: have them reviewed for your situation.
 
 ### Docker
 

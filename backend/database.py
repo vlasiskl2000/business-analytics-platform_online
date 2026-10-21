@@ -66,6 +66,10 @@ def create_tables():
             "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'analyst'"
         )
 
+    # Hash of the recovery code used to reset a forgotten password
+    if "recovery_hash" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN recovery_hash TEXT")
+
     # Goals
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS goals (
@@ -133,6 +137,16 @@ def create_user(username, password_hash, created_at, role="analyst"):
     )
     connection.commit()
     connection.close()
+
+
+def username_exists_ci(username):
+    """True when the name is taken, ignoring upper/lower case."""
+    connection = get_connection()
+    row = connection.execute(
+        "SELECT 1 FROM users WHERE username = ? COLLATE NOCASE LIMIT 1", (username,)
+    ).fetchone()
+    connection.close()
+    return row is not None
 
 
 def get_user(username):
@@ -383,3 +397,93 @@ def update_dashboard_positions(username, positions):
         )
     connection.commit()
     connection.close()
+
+
+# ---------------------------------------------------------------------------
+# Account: password recovery, export and deletion
+# ---------------------------------------------------------------------------
+def get_recovery_hash(username):
+    connection = get_connection()
+    row = connection.execute(
+        "SELECT recovery_hash FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    connection.close()
+    return row[0] if row else None
+
+
+def set_recovery_hash(username, recovery_hash):
+    connection = get_connection()
+    connection.execute(
+        "UPDATE users SET recovery_hash = ? WHERE username = ?",
+        (recovery_hash, username)
+    )
+    connection.commit()
+    connection.close()
+
+
+def update_password(username, password_hash, recovery_hash=None):
+    """Change the password; optionally replace the recovery code hash in the same step."""
+    connection = get_connection()
+    if recovery_hash is None:
+        connection.execute(
+            "UPDATE users SET password_hash = ? WHERE username = ?",
+            (password_hash, username)
+        )
+    else:
+        connection.execute(
+            "UPDATE users SET password_hash = ?, recovery_hash = ? WHERE username = ?",
+            (password_hash, recovery_hash, username)
+        )
+    connection.commit()
+    connection.close()
+
+
+def export_account(username):
+    """Everything stored about an account (without the password hashes)."""
+    connection = get_connection()
+    user = connection.execute(
+        "SELECT username, created_at, role FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    datasets = connection.execute(
+        "SELECT name, filename, uploaded_at, rows, is_active FROM datasets WHERE owner_username = ? ORDER BY id",
+        (username,)
+    ).fetchall()
+    goals = connection.execute(
+        "SELECT metric, target, created_at FROM goals WHERE username = ? ORDER BY id", (username,)
+    ).fetchall()
+    alerts = connection.execute(
+        "SELECT title, message, severity, created_at, is_read FROM alerts WHERE username = ? ORDER BY id",
+        (username,)
+    ).fetchall()
+    widgets = connection.execute(
+        "SELECT title, widget_type, metric, dimension, position, created_at FROM dashboard_widgets "
+        "WHERE username = ? ORDER BY id", (username,)
+    ).fetchall()
+    connection.close()
+
+    def rows(keys, data):
+        return [dict(zip(keys, row)) for row in data]
+
+    return {
+        "account": dict(zip(["username", "created_at", "role"], user)) if user else None,
+        "datasets": rows(["name", "filename", "uploaded_at", "rows", "is_active"], datasets),
+        "goals": rows(["metric", "target", "created_at"], goals),
+        "alerts": rows(["title", "message", "severity", "created_at", "is_read"], alerts),
+        "dashboard_widgets": rows(["title", "widget_type", "metric", "dimension", "position", "created_at"], widgets),
+    }
+
+
+def delete_account(username):
+    """Remove the user and every row that belongs to them. Returns the deleted dataset filenames."""
+    connection = get_connection()
+    filenames = [r[0] for r in connection.execute(
+        "SELECT filename FROM datasets WHERE owner_username = ?", (username,)
+    ).fetchall()]
+    connection.execute("DELETE FROM goals WHERE username = ?", (username,))
+    connection.execute("DELETE FROM alerts WHERE username = ?", (username,))
+    connection.execute("DELETE FROM dashboard_widgets WHERE username = ?", (username,))
+    connection.execute("DELETE FROM datasets WHERE owner_username = ?", (username,))
+    connection.execute("DELETE FROM users WHERE username = ?", (username,))
+    connection.commit()
+    connection.close()
+    return filenames

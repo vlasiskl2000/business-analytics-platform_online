@@ -4,6 +4,9 @@ import pandas as pd
 
 # Sample data shipped with the project (read only).
 DEFAULT_DATASET = "data/sales.csv"
+# Larger sample used by the shared, read-only demo account (see backend/auth.py).
+DEMO_DATASET = "data/demo_sales.csv"
+DEMO_USERNAME = "demo-visitor"
 # Uploaded files and per-user data live in DATA_DIR (a persistent disk in production).
 DATA_DIR = os.getenv("DATA_DIR", "data")
 
@@ -29,7 +32,7 @@ def load_sales_data(username: str | None = None):
     if os.path.exists(active_path):
         data = pd.read_csv(active_path)
     else:
-        data = pd.read_csv(DEFAULT_DATASET)
+        data = pd.read_csv(DEMO_DATASET if username == DEMO_USERNAME else DEFAULT_DATASET)
 
     data["date"] = pd.to_datetime(data["date"])
     return data

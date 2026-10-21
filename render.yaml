@@ -8,6 +8,11 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      # Shown on /privacy and /terms - set your own:
+      - key: CONTACT_EMAIL
+        sync: false
+      - key: OPERATOR_NAME
+        sync: false
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "60"
       # Free plan: uploads and the database are stored in the project's

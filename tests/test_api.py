@@ -7,7 +7,7 @@ def register_and_login(client):
 
     response = client.post(
         "/api/register",
-        json={"username": username, "password": password},
+        json={"username": username, "password": password, "accepted_terms": True},
     )
     assert response.status_code == 200
     assert response.json()["success"] is True
@@ -623,3 +623,114 @@ def test_labels_follow_the_uploaded_columns(client):
 
     client.post("/api/reset", headers=headers)
     assert client.get("/api/labels", headers=headers).json()["product"] == "Product"
+
+
+
+def _register(client, username, password="StrongPass123!", accepted=True):
+    return client.post(
+        "/api/register",
+        json={"username": username, "password": password, "accepted_terms": accepted},
+    ).json()
+
+
+def test_registration_requires_accepting_the_terms_and_returns_recovery_code(client):
+    refused = _register(client, "no_terms_user", accepted=False)
+    assert refused["success"] is False and "Terms" in refused["message"]
+
+    created = _register(client, "terms_user")
+    assert created["success"] is True
+    assert len(created["recovery_code"].replace("-", "")) == 16
+
+    assert _register(client, "demo-visitor")["success"] is False      # reserved name
+
+
+def test_password_reset_with_recovery_code(client):
+    from backend import auth
+
+    auth.rate_limit_reset_all()
+    code = _register(client, "forgetful")["recovery_code"]
+
+    wrong = client.post("/api/reset-password", json={
+        "username": "forgetful", "recovery_code": "AAAA-AAAA-AAAA-AAAA", "new_password": "NewPass123!"}).json()
+    assert wrong["success"] is False
+
+    ok = client.post("/api/reset-password", json={
+        "username": "forgetful", "recovery_code": code.lower(), "new_password": "NewPass123!"}).json()
+    assert ok["success"] is True and ok["recovery_code"] != code
+
+    assert client.post("/api/login", json={"username": "forgetful", "password": "NewPass123!"}).json()["success"] is True
+    assert client.post("/api/login", json={"username": "forgetful", "password": "StrongPass123!"}).json()["success"] is False
+
+    # the used code stops working
+    again = client.post("/api/reset-password", json={
+        "username": "forgetful", "recovery_code": code, "new_password": "Another123!"}).json()
+    assert again["success"] is False
+
+
+def test_new_recovery_code_needs_the_password(client):
+    _, headers = register_and_login(client)
+    bad = client.post("/api/account/recovery-code", json={"password": "wrong"}, headers=headers).json()
+    assert bad["success"] is False
+    good = client.post("/api/account/recovery-code", json={"password": "StrongPass123!"}, headers=headers).json()
+    assert good["success"] is True and len(good["recovery_code"]) == 19
+
+
+def test_demo_login_is_read_only(client):
+    demo = client.post("/api/demo-login").json()
+    assert demo["success"] is True and demo["demo"] is True
+    headers = {"Authorization": f"Bearer {demo['access_token']}"}
+
+    assert client.get("/api/kpis", headers=headers).status_code == 200
+    assert client.get("/api/me", headers=headers).json()["role"] == "demo"
+
+    blocked = client.post("/api/goals", params={"metric": "revenue", "target": 1}, headers=headers)
+    assert blocked.status_code == 403 and "read-only" in blocked.json()["detail"]
+    upload = client.post("/api/upload", files={"file": ("a.csv", b"date,sales\n2026-01-01,1\n", "text/csv")}, headers=headers)
+    assert upload.status_code == 403
+    assert client.post("/api/account/delete", json={"password": "x"}, headers=headers).status_code == 403
+    assert client.post("/api/reset", headers=headers).status_code == 403
+
+
+def test_export_and_delete_account(client):
+    username, headers = register_and_login(client)
+    client.post("/api/upload", files={"file": ("mine.csv", b"date,sales\n2026-01-01,10\n2026-01-02,20\n", "text/csv")}, headers=headers)
+
+    export = client.get("/api/account/export", headers=headers)
+    assert export.status_code == 200
+    assert "attachment" in export.headers["content-disposition"]
+    body = export.json()
+    assert body["account"]["username"] == username
+    assert any(d["filename"] == "mine.csv" for d in body["datasets"])
+
+    refused = client.post("/api/account/delete", json={"password": "wrong"}, headers=headers).json()
+    assert refused["success"] is False
+
+    done = client.post("/api/account/delete", json={"password": "StrongPass123!"}, headers=headers).json()
+    assert done["success"] is True
+    assert client.post("/api/login", json={"username": username, "password": "StrongPass123!"}).json()["success"] is False
+
+
+def test_legal_pages_and_site_info(client):
+    assert client.get("/privacy").status_code == 200
+    assert client.get("/terms").status_code == 200
+    assert "contact_email" in client.get("/api/site-info").json()
+    assert "/privacy" in client.get("/sitemap.xml").text
+
+
+def test_usernames_are_restricted_and_unique_ignoring_case(client):
+    for bad in ("ab", "bob!", "a/b", "x" * 65, "white space"):
+        result = _register(client, bad)
+        assert result["success"] is False and "Username" in result["message"], bad
+
+    assert _register(client, "Maria_K")["success"] is True
+    assert _register(client, "maria_k")["success"] is False       # same name, other case
+    assert _register(client, "MARIA_K")["success"] is False
+
+
+def test_demo_account_sees_the_larger_sample_data(client):
+    demo = client.post("/api/demo-login").json()
+    headers = {"Authorization": f"Bearer {demo['access_token']}"}
+    kpis = client.get("/api/kpis", headers=headers).json()
+    assert kpis["total_revenue"] > 1_000_000
+    months = client.get("/api/monthly-trend", headers=headers).json()
+    assert len(months) == 24

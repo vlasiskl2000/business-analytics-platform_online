@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terms of Use – Business Analytics Platform</title>
+<meta name="description" content="The rules for using Business Analytics Platform.">
+<meta name="theme-color" content="#070a1c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%237c6cf0'/%3E%3Cpath d='M16 44V30h8v14zm12 0V20h8v24zm12 0V26h8v18z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="landing.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><span class="logo" aria-hidden="true">BA</span>Business Analytics</a>
+    <nav class="links" aria-label="Main"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a class="btn" href="/app">Open the app</a></nav>
+  </header>
+  <main class="doc">
+
+    <h1>Terms of Use</h1>
+    <p class="meta">Last updated: 21 October 2026</p>
+
+    <p>By creating an account or using Business Analytics Platform (&ldquo;the service&rdquo;) you agree to these terms. If you do not agree, please do not use the service. The demo can be explored without agreeing, but it is subject to the same fair-use rules.</p>
+
+    <h2>1. The service</h2>
+    <p>The service lets you upload sales data and view statistics, charts, forecasts, anomaly detection and simple simulations based on that data. The service is run by <span data-operator>the operator of this website</span> (contact: <span data-contact>the contact address published by the site owner</span>).</p>
+
+    <h2>2. Your account</h2>
+    <ul>
+      <li>You are responsible for keeping your password and recovery code secret and for what happens in your account.</li>
+      <li>Give accurate information and do not create accounts to harm or overload the service.</li>
+      <li>We can suspend or remove accounts that break these terms or put the service at risk.</li>
+    </ul>
+
+    <h2>3. Your data</h2>
+    <ul>
+      <li>You keep all rights to the files and data you upload. You give us permission to store and process them only to run the service for you, as described in the <a href="/privacy">Privacy Policy</a>.</li>
+      <li>Only upload data you have the right to use. Do not upload unlawful content or personal data about other people without a legal basis.</li>
+      <li>You can download or delete your data at any time from Settings.</li>
+    </ul>
+
+    <h2>4. Acceptable use</h2>
+    <p>Do not attack, probe or overload the service, try to access other people&rsquo;s data, upload malicious files, bypass limits (such as sign-in limits), or use the service for anything illegal.</p>
+
+    <h2>5. Results are estimates, not advice</h2>
+    <p>Forecasts, anomaly detection, insights and simulations are automatic estimates based on the data you provide and simple statistical methods. They can be wrong, especially with little data. They are not financial, accounting, tax or legal advice, and you should not rely on them alone for important decisions.</p>
+
+    <h2>6. Availability and changes</h2>
+    <p>We try to keep the service running but do not promise it will always be available or free of errors. Features may change or be removed. Keep your own copy of important files.</p>
+
+    <h2>7. Liability</h2>
+    <p>The service is provided &ldquo;as is&rdquo;. To the extent the law allows, we are not liable for indirect losses, lost profits or lost data arising from the use of the service. Nothing in these terms limits liability that cannot be limited by law, or your rights as a consumer.</p>
+
+    <h2>8. Ending your use</h2>
+    <p>You can stop at any time and delete your account in Settings. These terms continue to apply to anything that happened before.</p>
+
+    <h2>9. Changes and law</h2>
+    <p>We may update these terms; the date above shows the latest version, and continuing to use the service after a change means you accept it. These terms are governed by the laws of Greece, without affecting mandatory consumer rights in your own country.</p>
+  </main>
+  <footer>&copy; <span id="yr">2026</span> Business Analytics Platform &middot; <a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms of Use</a></footer>
+</div>
+<script>
+(function () {
+  try { document.getElementById("yr").textContent = new Date().getFullYear(); } catch (e) {}
+  fetch("/api/site-info").then(function (r) { return r.ok ? r.json() : {}; }).then(function (i) {
+    document.querySelectorAll("[data-operator]").forEach(function (el) { if (i.operator) el.textContent = i.operator; });
+    document.querySelectorAll("[data-contact]").forEach(function (el) {
+      if (!i.contact_email) return;
+      var a = document.createElement("a"); a.href = "mailto:" + i.contact_email; a.textContent = i.contact_email;
+      el.textContent = ""; el.appendChild(a);
+    });
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>

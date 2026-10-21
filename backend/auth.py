@@ -55,6 +55,46 @@ def create_access_token(username: str, role: str = "analyst"):
 security = HTTPBearer()
 
 
+# ---------------------------------------------------------------------------
+# Recovery codes (reset a forgotten password without e-mail) and demo access
+# ---------------------------------------------------------------------------
+RECOVERY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"      # no 0/O/1/I
+from backend.data_loader import DEMO_USERNAME   # the demo account name lives next to its sample data
+DEMO_ROLE = "demo"
+RESERVED_USERNAMES = {"demo", "demo-visitor"}
+
+
+def generate_recovery_code() -> str:
+    """16 random characters shown as XXXX-XXXX-XXXX-XXXX (about 80 bits)."""
+    raw = "".join(secrets.choice(RECOVERY_ALPHABET) for _ in range(16))
+    return "-".join(raw[i:i + 4] for i in range(0, 16, 4))
+
+
+def normalize_recovery_code(code: str) -> str:
+    return "".join(ch for ch in str(code or "").upper() if ch.isalnum())
+
+
+def hash_recovery_code(code: str) -> str:
+    return pwd_context.hash(normalize_recovery_code(code))
+
+
+def verify_recovery_code(code: str, code_hash) -> bool:
+    if not code_hash or len(normalize_recovery_code(code)) != 16:
+        return False
+    try:
+        return pwd_context.verify(normalize_recovery_code(code), code_hash)
+    except Exception:
+        return False
+
+
+def token_role(token: str):
+    """Role stored in a valid token, or None."""
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("role", "analyst")
+    except JWTError:
+        return None
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
